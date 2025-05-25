@@ -1,0 +1,3 @@
+[submodule "Legacy-iOS-Kit"]
+	path = Legacy-iOS-Kit
+	url = https://github.com/alex-free/Legacy-iOS-Kit
