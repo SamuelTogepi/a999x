@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=1.0
+version=1.0.1
 turdus_merula=turdus_m3rula-v1.0.4
 
 echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2025 Alex Free (3-BSD)\nhttps://github.com/alex-free/a999activator\n"
@@ -55,17 +55,29 @@ restore_ios_15_for_device() {
     fi
     
     wait_for_normal_mode
+    echo "iOS 15.8.4 has been restored! It will take some additional time for it to start up into Setup.app, please wait..."
     pair_iphone
+    
+    read -p "* Activate the iPhone. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should already be in in the iPhone with an active cell service before you activate it. 
+
+* Sign in to iCloud and complete Setup.app. Get to the home screen. 
+
+* Make sure Find My iPhone has been turned off.
+
+After all of the above is true, press enter."
+
+    wait_for_activation
 }
 
 boot_turdusra1n() {
     wait_for_recovery
-    # Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus.
+    # Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus. It appears to be an issue with turdus merula because it won't show as much output (never gets to bootx) but still returns 0.
     while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
-        while ! $turdus_merula/bin/turdusra1n -TP data/$device-$serial/$ver/block/*$ver-pteblock.bin; do 
+        while ! $turdus_merula/bin/turdusra1n -TP data/$device-$serial/$ver/block/*-pteblock.bin; do 
         echo "Something went wrong, lets try that again."
         done
 
+        # Give time to exit Recovery Mode so this is not executed again erronously.
         echo "Please wait, checking for proper booting in 20 seconds"
         sleep 20
     done
@@ -75,7 +87,13 @@ boot_turdusra1n() {
 
 enter_recovery() {    
     if ! Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then
-        Legacy-iOS-Kit/bin/macos/ideviceenterrecovery "$(Legacy-iOS-Kit/bin/macos/ideviceinfo -k UniqueDeviceID 2>/dev/null)" >/dev/null 2>&1
+        # If not in Recovery Mode assume in Normal Mode and attempt to enter Recovery Mode. If this fails we are already in Recovery Mode or possibly DFU Mode so we don't want to show an error."
+        if Legacy-iOS-Kit/bin/macos/ideviceenterrecovery "$(Legacy-iOS-Kit/bin/macos/ideviceinfo -k UniqueDeviceID 2>/dev/null)" >/dev/null 2>&1; then
+            # If this succeded lets tell the user what's going on. If it didn't succed then that's ok we don't need to tell them anything due to the above reasoning....
+            echo "Entering Recovery Mode, please wait..."
+        fi
+        
+        # If this was DFU Mode this is fine to show the user because it gets them back on track...
         wait_for_recovery
     fi
 }
@@ -90,7 +108,7 @@ wait_for_normal_mode() {
 wait_for_recovery() {
      while ! Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
         if Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
-            echo "DFU Mode detected. Please press the HOME+POWER buttons until your iPhone reboots into Recovery Mode."
+            echo "DFU Mode detected. Please press the HOME+POWER buttons until your iPhone reboots into Recovery Mode. Do not stop pressing those buttons until you get to Recovery Mode."
 
             while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "DFU Mode"; do
                 sleep 1
@@ -126,7 +144,7 @@ start_rd() {
     while [[ $ssh_connected != 1 ]]; do
         # Incase this failed previously and is running again, wait.
         wait_for_recovery
-        # Stay in Recovery Mode, prevent normal mode booting until ramdisk boots and runs script to restore this.
+        # Stay in Recovery Mode, prevent normal mode booting until ramdisk boots and runs script to restore this. Unless we enter DFU mode accidentally this is the most useful case of enforce_recovery ever.
         enforce_recovery
         # Clear any existing iproxy...
         iproxy_kill
@@ -135,17 +153,27 @@ start_rd() {
         # Start our own proxy for USB SSH fresh...
         iproxy_kill
         iproxy_start
-        echo "Waiting 5 seconds before testing SSH ramdisk connection..."
+        echo "Waiting 5 seconds before testing SSH ramdisk connection, please standby..."
         sleep 5
         # SSH connection check.
         ssh_connected=$(Legacy-iOS-Kit/bin/macos/sshpass -p 'alpine' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1 'echo 1' 2>/dev/null)
     done
 
+    # Need to reset this for ramdisk round 2.
     ssh_connected=0
 
     echo "Booted SSH Ramdisk!"
 
     #ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1
+}
+
+wait_for_activation()
+{
+    # This confirms the iPhone is activated. It does not confirm if iCloud was signed in, if Find My iPhone was turned off, or if an active cell service SIM was used during activation.
+    while ! is_activated; do
+        read -p "iPhone is not activated! Please make sure all of the above criteria are true as well and then press enter."
+        sleep 1
+    done
 }
 
 get_activation() {
@@ -161,41 +189,38 @@ get_activation() {
         elif [ "$ios_version" != "15.8.4" ]; then
             echo "Latest iOS version is not installed. Restoring iPhone to iOS 15.8.4."
             restore_ios_15=true
+        elif [ "$ios_version" == "15.8.4" ]; then
+            pair_iphone
+            read -p "Found iOS 15.8.4!
+
+Because this is an existing iOS 15.8.4 installation, make sure all of the following is true:
+
+* iPhone is activated. If you are going to use cellular features on iOS 9, your SIM card should have been in the iPhone when you originally activated it with an active cell service. 
+
+* Setup.app has been previously been completed. Your iPhone should boot to the lockscreen, and go to the homescreen after being unlocked. It should not boot up to the hello screen (Setup.app).
+
+* iCloud is signed in.
+
+* Find My iPhone is turned off.
+
+Do you need to restore your iPhone now to re-activate it with a SIM card installed that has an active cell service in order to use cellular features? (y/n): " restore_ios_15_response
+
+            if [[ "$restore_ios_15_response" == "y" || "$restore_ios_15_response" == "Y" ]]; then
+                restore_ios_15=true
+            else
+                # One last check to see if we should procceed on an existing iOS 15.8.4 installation.
+                wait_for_activation
+            fi
         fi
 
         if [ $restore_ios_15 == "true" ]; then
             restore_ios_15_for_device
-            read -p "Activate the iPhone and sign in to iCloud. Complete Setup.app and get to the home screen. If you are going to use cellular features, your SIM card should already be in in the iPhone with active service before you activate it. Then press enter."
-            
-            while ! is_activated; do
-                echo "Waiting for Activated iPhone..."
-                sleep 1
-            done
-        else
-            pair_iphone
-            read -p "Found iOS 15.8.4!
-            
-If you are going to use cellular features, your SIM card should have been in the iPhone when you originally activated it with active service. If this is not the case and you wish to use cellular features, you need to restore the iPhone to iOS 15.8.4 and re-activate it with the SIM card installed.
-
-Do you need to restore your iPhone now to re-activate it with a SIM card installed that has active service in order to use cellular features? (y/n): " restore_ios_15_response
-
-            if [[ "$restore_ios_15_response" == "y" || "$restore_ios_15_response" == "Y" ]]; then
-                restore_ios_15=true
-                restore_ios_15_for_device
-                read -p "Activate the iPhone with your SIM card in in the iPhone with active service and sign in to iCloud. Complete Setup.app and get to the home screen. Then press enter."
-            else
-                read -p "Make you are signed into iCloud, have completed Setup.app, and are on the home screen. Then press enter."
-            fi
-            
-            while ! is_activated; do
-                echo "Waiting for Activated iPhone..."
-                sleep 1
-            done
         fi
 
+        # Send it...
         start_rd
     else
-        echo "Activation records found!"
+        echo "Existing activation records found!"
         return
     fi
 
@@ -237,7 +262,7 @@ Do you need to restore your iPhone now to re-activate it with a SIM card install
     expect "#"
     
     # Move com.apple.factorydata
-    send "mv /mnt1/System/Library/Caches/com.apple.factorydata /mnt1/activate\r"
+    send "cp -a /mnt1/System/Library/Caches/com.apple.factorydata /mnt1/activate\r"
     expect "#"
 
     # Create tars.
@@ -256,6 +281,8 @@ Do you need to restore your iPhone now to re-activate it with a SIM card install
 
     send "tar zcf com.apple.commcenter.device_specific_nobackup.plist.tar.gz com.apple.commcenter.device_specific_nobackup.plist\r"
     expect "#"
+    send "rm com.apple.commcenter.device_specific_nobackup.plist"
+    expect "#"
 
     send "tar zcf com.apple.factorydata.tar.gz com.apple.factorydata\r"
     expect "#"
@@ -267,7 +294,7 @@ Do you need to restore your iPhone now to re-activate it with a SIM card install
     send "exit\r"
 
     # Transfer tars to computer.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r -P 6414 root@127.0.0.1:/mnt1/activate data/$device-$serial
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r -P 6414 root@127.0.0.1:/mnt1/activate data/$device-$serial/activate
     expect {
         "continue connecting" {
             send "yes\r"
@@ -314,21 +341,23 @@ restore_ipsw() {
     file="$(basename $1)"
 
     if [ ! -f data/ipsw/$file ]; then
+        echo "Downloading $file..."
+        
         while ! curl -L $1 -o data/ipsw/$file; do
             echo "Download failed, trying again."
             rm $file
         done
     fi
 
-    # Get ver num only, i.e. 9.0
-    ver=$(echo "$1" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | sort -Vr | head -n1)
+    # Get ver and build number, i.e. 9.2_13D20 for possible iPhone 6S downgrade (even though we can't use 13D20 or any 'new' iOS 9.2.1 for other devices because jbme does not work)... Build number is important for iPhone 6S and iPhone 6S Plus which have 2 different iOS 9.2.1 versions available for restore.
+    ver=$(echo "$1" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+_[0-9A-Za-z]+')
 
     echo "Restoring iOS $ver with $file.."
 
     mkdir -p data/$device-$serial/$ver 
 
     #SHCblock.
-    if ! find data/$device-$serial/$ver/block -type f -name "*$ver-shcblock.bin" 2>/dev/null | grep -q . 2>/dev/null; then
+    if ! find data/$device-$serial/$ver/block -type f -name "*-shcblock.bin" 2>/dev/null | grep -q . 2>/dev/null; then
 
         turdursra1n_pwn
 
@@ -341,11 +370,11 @@ restore_ipsw() {
     fi
 
     # PTEblock.
-    if ! find data/$device-$serial/$ver/block -type f -name "*$ver-pteblock.bin" 2>/dev/null | grep -q . 2>/dev/null; then
+    if ! find data/$device-$serial/$ver/block -type f -name "*-pteblock.bin" 2>/dev/null | grep -q . 2>/dev/null; then
         
         turdursra1n_pwn
 
-        while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver --get-pteblock --load-shcblock data/$device-$serial/$ver/block/*$ver-shcblock.bin data/ipsw/$file; do
+        while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver --get-pteblock --load-shcblock data/$device-$serial/$ver/block/*-shcblock.bin data/ipsw/$file; do
             retry_pwn
         done
 
@@ -356,7 +385,7 @@ restore_ipsw() {
     # Restore.
     turdursra1n_pwn
 
-    while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver -o --load-pteblock data/$device-$serial/$ver/block/*$ver-pteblock.bin data/ipsw/$file; do
+    while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver -o --load-pteblock data/$device-$serial/$ver/block/*-pteblock.bin data/ipsw/$file; do
         retry_pwn
     done
 }
@@ -632,7 +661,7 @@ EOF
     iproxy_kill
     boot_turdusra1n
     pair_iphone
-    echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPhone will automatically reboot into Recovery Mode after restoring activation. a999activator is going to start checking for Recovery Mode in 30 seconds so that the LAST STEP can be completed!"
+    echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPhone will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 30 seconds so that the LAST STEP can be completed!"
     sleep 30
     boot_turdusra1n
 
@@ -656,7 +685,7 @@ cd "$(dirname "$0")"
 
 # Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus.
 while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
-    while ! '$turdus_merula'/bin/turdusra1n -TP data/'$device'-'$serial'/'$ver'/block/*'$ver'-pteblock.bin; do 
+    while ! '$turdus_merula'/bin/turdusra1n -TP data/'$device'-'$serial'/'$ver'/block/*-pteblock.bin; do 
         echo "Something went wrong, lets try that again..."
     done
 
@@ -665,15 +694,20 @@ while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode
 done
 echo "Enable the jailbreak with http://jbme.ddw.nu in Safari!"
 
-' > "$boot_script"
+' > $boot_script
 
         chmod 755 $boot_script
         # Clips the last character otherwise in the echo below.
         boot_script=$(echo "$boot_script" | tr -d '\r')
         echo "Activation was restored! You need to enable the jailbreak with http://jbme.ddw.nu in Safari everytime you boot, but your done! If your phone is powered off or rebooted, it will first boot to Recovery Mode. You'll need to run the $boot_script command (now found in the same folder as the a999 command) to boot it into normal mode."
 
-        if [[ $ver == "9.2" || $ver == "9.2.1" ]]; then
-            echo "IMPORTANT INFORMATION FOR iOS 9.2 and iOS 9.2.1 USERS (WHICH YOU ARE): DO NOT SIGN IN TO ICLOUD IN SETUP.APP! It will not work. Instead, complete Setup.app without signing in and get to the home screen. Then, sign in to iCloud with the Settings app!"
+        if [[ $ver == 9.2* ]]; then
+            echo "IMPORTANT INFORMATION FOR iOS 9.2 AND iOS 9.2.1 USERS (WHICH YOU ARE): DO NOT SIGN IN TO ICLOUD IN SETUP.APP! It will not work. Instead, complete Setup.app without signing in and get to the home screen. Then, sign in to iCloud with the Settings app!"
+        elif [[ $ver == 9.3* ]]; then
+            echo "IMPORTANT INFORMATION FOR iOS 9.3, iOS 9.3.1, iOS 9.3.2, AND iOS 9.3.3 USERS (WHICH YOU ARE): iMessage and FaceTime do not work yet!"
+            if [ $device != "iphone_se" ]; then
+                echo "If you need iMessage and or FaceTime downgrade to iOS 9.2 or iOS 9.2.1 instead."
+            fi
         fi
     else
         echo "Error: activation was not restored. Please try again."
@@ -686,7 +720,7 @@ iphone_6s_firmware_select() {
     options=(
         "9.2 (13C75) (12/8/2015)"
         "9.2.1 (13D15) (1/19/2016)"
-        "9.2.1 (13D20) (2/18/2016)"
+        #"9.2.1 (13D20) (2/18/2016)" Can't use because jbme doesn't support it
         "9.3 (13E234) (3/21/2016)"
         "9.3.1 (13E238) (3/31/2016)"
         "9.3.2 (13F69) (5/16/2016)"
@@ -705,10 +739,10 @@ iphone_6s_firmware_select() {
                 restore_10_3_3 "http://appldnld.apple.com/ios9.2.1/031-47635-20160119-97350056-B969-11E5-A65F-634D8FD31F8F/iPhone8,1_9.2.1_13D15_Restore.ipsw"
                 break;
                 ;;
-            "9.2.1 (13D20) (2/18/2016)")
-                restore_10_3_3 "http://appldnld.apple.com/ios9.2.1/031-49377-20160217-4BB1908C-D44D-11E5-9900-0952919DCAD8/iPhone8,1_9.2.1_13D20_Restore.ipsw"
-                break;
-                ;;
+            #"9.2.1 (13D20) (2/18/2016)") Can't use because jbme doesn't support it
+                #restore_10_3_3 "http://appldnld.apple.com/ios9.2.1/031-49377-20160217-4BB1908C-D44D-11E5-9900-0952919DCAD8/iPhone8,1_9.2.1_13D20_Restore.ipsw"
+                #break;
+                #;;
             "9.3 (13E234) (3/21/2016)")
                 restore_10_3_3 "http://appldnld.apple.com/iOS9.3/031-20814-20160321-50FF38D4-EAA8-11E5-AAA8-C479BD379832/iPhone8,1_9.3_13E234_Restore.ipsw"
                 break;
@@ -742,7 +776,7 @@ iphone_6s_plus_firmware_select() {
     options=(
         "9.2 (13C75) (12/8/2015)"
         "9.2.1 (13D15) (1/19/2016)"
-        "9.2.1 (13D20) (2/18/2016)"
+        #"9.2.1 (13D20) (2/18/2016)" can't use because jbme doesn't support it
         "9.3 (13E234) (3/21/2016)"
         "9.3.1 (13E238) (3/31/2016)"
         "9.3.2 (13F69) (5/16/2016)"
@@ -761,10 +795,10 @@ iphone_6s_plus_firmware_select() {
                 restore_10_3_3 "http://appldnld.apple.com/ios9.2.1/031-47609-20160119-798F784C-B969-11E5-8729-F24C8FD31F8F/iPhone8,2_9.2.1_13D15_Restore.ipsw"
                 break;
                 ;;
-            "9.2.1 (13D20) (2/18/2016)")
-                restore_10_3_3 "http://appldnld.apple.com/ios9.2.1/031-49073-20160217-4BB05046-D44D-11E5-9D30-0852919DCAD8/iPhone8,2_9.2.1_13D20_Restore.ipsw"
-                break;
-                ;;
+            #"9.2.1 (13D20) (2/18/2016)") can't use because jbme doesn't support it
+                #restore_10_3_3 "http://appldnld.apple.com/ios9.2.1/031-49073-20160217-4BB05046-D44D-11E5-9D30-0852919DCAD8/iPhone8,2_9.2.1_13D20_Restore.ipsw"
+                #break;
+                #;;
             "9.3 (13E234) (3/21/2016)")
                 restore_10_3_3 "http://appldnld.apple.com/iOS9.3/031-28376-20160321-51006FEC-EAA8-11E5-AEC6-D279BD379832/iPhone8,2_9.3_13E234_Restore.ipsw"
                 break;
@@ -831,12 +865,41 @@ iphone_se_firmware_select() {
     done
 }
 
+# Begin actual execution. Check for the existence of the binary launch daemon which is generated for the release by the build script.
+if [ ! -f "com.alex.activate.plist" ]; then
+    echo "Error: can not find com.alex.activate.plist. This most likely means you are trying to execute a999 from the source tree, rather then a release which is not allowed. Please execute the build command in the source tree and cd into the built release. If you downloaded an a999activator release and are getting this error, you release is incomplete and missing a neccesary file. Please redownload the release and run a999activator again."
+    exit 1
+fi
+
+# Update functionallity. We need to get 2 things, the data folder and any boot* scripts.
+
+if [ "$1" == "-u" ]; then
+
+    if [ "$#" -ne 2 ]; then
+        echo "You gave the -u argument, which expect an existing a999activator release directory as the following argument."
+        exit 1
+    fi
+
+    if [ -d "$2"/data ]; then
+        echo "Found existing data folder!"
+        cp -rv "$2"/data .
+        echo "Copied existing data folder to a999activator!"
+    else
+        echo "Error: Could not find the data folder in $2!"
+        exit 1
+    fi
+
+    # Don't print error messages if no boot-* files exist.
+    cp -rv "$2"/boot-* . 2>/dev/null 
+fi
+
 if [ ! -d data ]; then
     mkdir -p data/ipsw
 else
     echo "Loaded existing data folder!"
 fi
 
+# Basically I handle the dependency stuff for Legacy-iOS-Kit right here and now. My fork of Legacy-iOS-Kit doesn't do this when ran because it makes the UX janky and it's much better to just do it here and now.
 if [ -f ".firstrun" ]; then
     if command -v port > /dev/null; then
         echo "Found MacPorts!"
@@ -851,20 +914,24 @@ if [ -f ".firstrun" ]; then
         exit 1
     fi
 
+    # This is to account for LibUSB being just installed.
     read -p "Please disconnect your USB-A Lightning cable from your mac, and then reconnect it"
 fi
 
+# All these executables are signed so that is the only think preventing gatekeeper from allowing the script to be automatic is the quarintine attributes.
 # Remove any quarintine attribute on $turdus_merula
 xattr -r -d com.apple.quarantine $turdus_merula/bin
-# Remove any quarintine attribute on $turdus_merula
+# Remove any quarintine attribute on Legacy-iOS-Kit.
 xattr -r -d com.apple.quarantine Legacy-iOS-Kit/bin/macos
 
 echo "Searching for an iPhone 6S, iPhone 6S Plus, or iPhone SE connected to this computer with a USB-A Lightning cable. Please wait..."
 
+# Need the serial number to identify what cached data to use. This is available in Recovery Mode and Normal mode, but not in DFU Mode so we don't allow this to run until we get into Recovery Mode if DFU Mode is detected.
 if Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
     wait_for_recovery
 fi
 
+# Loop until the iPhone can be detected in Recovery Mode or Normal Mode. It sure as hell aint in DFU Mode at this point...
 while true; do
 
     if Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then

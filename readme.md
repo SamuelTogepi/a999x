@@ -1,12 +1,32 @@
-# A999 Activatior: A9, iOS 9, 9 Years Later
+# A999 Activator: A9, iOS 9, 9 Years Later
 
 _By Alex Free_
 
-A completely automatic solution that tether downgrades to iOS 9.2-9.3.3, jailbreaks, and activates any iPhone 6S, iPhone 6S Plus, or iPhone SE. Made possible by the work of many [others](#credits). iOS 9 WILL NEVER DIE. I had an iPhone 6S that I jailbroke with Pangu 9 on iOS 9.0.something back in the day, hence why I made this. I actually daily drove this for a bit before upgrading finally to an iPhone X. Instagram mostly works, imessage/ft/calls what else do you need for a daily driver??
+A completely automatic solution that tether downgrades to iOS 9.2-9.3.3, jailbreaks, and activates any iPhone 6S, iPhone 6S Plus, or iPhone SE. Made possible by the work of many [others](#credits). iOS 9 WILL NEVER DIE. I had an iPhone 6S that I jailbroke with Pangu 9 on iOS 9.0.something back in the day, hence why I made this.
 
 For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many iPhones and no one really knows why. Apple seems to have broken something during downgrade party. After [turdus_merula](https://sep.lol) dropped there were more iOS 9 users then there had been in years, many now expierencing the activation issue (including myself). A999Activator takes all the public knowlege on activating A9 iOS 9 devices and uses some [new](#how-this-works) techniques to make the proccess as seemless as possible for the end user. I hope you enjoy this as much as I. I've been out of the scene mostly for years, so if you can contribute to this and make it better please do!
 
-| [Github](https://github.com/alex-free/a999activator) | [Homepage](https://github.com/alex-free/a999activator) |
+## IMPORTANT INFORMATION:
+
+The following information will be given to you while A999Activator is running as well. There are some limitations for certain iOS 9 versions you need to be aware of. I recommend downgrading to iOS 9.2 or iOS 9.2.1 (I daily drove 9.2 for a week!).
+
+* You can't sign into iCloud when you get to Setup.app on iOS 9.2 and iOS 9.2.1. If you attempt to sign-in to your iCloud on these versions it will never complete and you'll need to reboot the iPhone. **Instead on those versions don't sign into iCloud until you complete Setup.app. Then go to the Settings.app from the home screen and sign into iCloud (that works!).**
+
+* You can't sign into iMessage on iOS 9.3, iOS 9.3.1, iOS 9.3.2, and iOS 9.3.3. **There is no workaround (yet??) other then to use iOS 9.2 or iOS 9.2.1 which can sign in and work.** This is unfortunate for iPhone SE users.
+
+* You can't sign into FaceTime on iOS 9.3, iOS 9.3.1, iOS 9.3.2, and iOS 9.3.3. **There is no workaround (yet??) other then to use iOS 9.2 or iOS 9.2.1 which can sign in and work.** This is unfortunate for iPhone SE users.
+
+| iOS Version | Cellular | WiFi | iMessage | FaceTime | App Store | iCloud Sign in (Setup.app) | iCloud Sign in (Settings app) | Sideloading |
+|-------------|----------|------|----------|----------|-----------|----------------------------|------------------------------|-------------|
+| 9.2         | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
+| 9.2.1       | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
+| 9.3         | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+| 9.3.1       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+| 9.3.2       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+| 9.3.3       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+
+
+| [Github](https://github.com/alex-free/a999activator) | [Homepage](https://github.com/alex-free/a999activator) | [Reddit Post](https://www.reddit.com/r/setupapp/comments/1kux73s/a999activator_automatic_downgrade_to_ios_9_with/) |
 
 # Table Of Contents
 
@@ -21,10 +41,31 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 
 ## Downloads
 
-### Version 1.0 (5/25/2025)
+### Version 1.0.1 (5/29/2025)
 
-[a999activator-v1.0-mac-os-universal.zip](https://github.com/alex-free/a999activator/releases/download/v1.0/a999-activator-v1.0-mac-os-universal.zip) _For Mac OS 10.12 and newer_
+[a999activator-v1.0.1-mac-os-universal.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.1/a999-activator-v1.0.1-mac-os-universal.zip) _For Mac OS 10.12 and newer_
 
+Changes:
+
+* Added an important information table explaining the functionallity offered.
+
+* Removed option to downgrade to the newer revised build of iOS 9.2.1 (13D20). Apple released 2 versions of iOS 9.2.1 for Touch-ID capable iPhones to fix a "[bug](https://www.idownloadblog.com/2016/02/18/ios-9-2-1-build-13d20-ipad/)" related to non-apple Touch-ID replacement home buttons causing a fail to activate, connect to iTunes and "error 53" after the update to the intial release of iOS 9.2.1 (13D15). The newer revised version of iOS 9.2.1 (13D20) does not work with http://jbme.ddw.nu, but the original iOS 9.2.1 (13D15) does. The newer revision was never pushed OTA and only as an IPSW file available for iTunes meant for affected users to manually use, so it probably was just never tested when http://jbme.ddw.nu came out. Anyways as of right now the newer revision of iOS 9.2.1 (13D20) can not be used since the jailbreak is required to update.
+
+* Lets user know when Recovery Mode is being entered from normal mode.
+
+* Lets user know what IPSW file is being downloaded.
+
+* Tweak to cached data format. Versions are now described with version number AND build number. If your using a `data` folder from v1.0, some data may need to be cached again (SEP PTE/SHCBlocks) leading to some additional DFU related steps re-triggering. However your activation data will be properly found and used so you don't need to do that again.
+
+* Informs user to turn off Find My iPhone before the downgrade. This fixes an issue with iMessage notifications if your downgraded iPhone didn't have a SIM card in it, where you wouldn't get notifications sent to a Phone number but would if it was sent to an email.
+
+* General cleanup/improved functions. Many more comments for those interested in how this works as well.
+
+* Added update functionallity. Do i.e. `a999 -u /path/to/old/a999activator-v1.0-mac-os-universal` and it will automatically copy over the data folder and any boot scripts into the newer release of a999activator.
+
+* Fixed an issue where activation data cache folder was sometimes not created and detected properly.
+
+[Previous versions](changelog.md).
 ## Usage
 
 Requirements: You need Mac OS 10.12 or newer, and you need either the [MacPorts](https://www.macports.org/install.php) or  [Homebrew](https://brew.sh/) package manager installed.
@@ -43,13 +84,15 @@ Requirements: You need Mac OS 10.12 or newer, and you need either the [MacPorts]
 
 ## Additional Info
 
+* It is EXTREMELY IMPORTANT TO SIGN OUT OF FIND MY iPHONE ON iOS 15.8.4 BEFORE THE DOWNGRADE. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPhone off).
+
 * On the first run of a999activator, there are many additional steps in the proccess that will trigger automatically for you. Subsequent runs will be signifigantly shorter and take fewer steps as it caches needed data from the first run locally in the `data` folder. That `data` folder is very important and personalized to your iPhone. You should back it up because you can put it back in any future a999activator release and it will use that data when it detects your iPhone!.
 
 * Certian aspects of Turdus_ra1n (exploiting SEP, booting exploited iOS) can fail the first time. This is why A999activator has very extensive if-fail-then-retry logic. It will eventually work, and it won't continue the proccess until it does. So don't be discouraged when it says `Something went wrong, lets try that again` because it's really just working as intended and trying again (sometimes many times to get that PTEBlock) does eventually work out. One exception to this is if turdusra1n/turdus_merula crashes at `- <Log> checkm8 setup stage`. If your stuck here for a long time (more then 30 seconds) I would `ctrl+c` to exit a999activator, unpulg the USB-A to Lightning cable from the USB port on the Mac, then plug it back in before running the `a999` command again. Unfortunately I don't have a better solution for this yet as it is a turdus merula problem.
 
 * In a similar vein to above, if you fail to enter DFU mode when prompted or the custom ramdisk fails to boot a999activator notices this and goes back to correct it.
 
-* Very rarely, the ramdisk may not be able to mount the iOS 9 filesystem after the restore. If this occurs you will see a bunch of errors and when iOS 9 boots you will see Setup.app. In this case, `ctrl+c` out of a999activator and run it again.
+* Very rarely Turdus Merula fails to restore iOS 9. This is an A9 Turdus Merula issue. If this occurs you will see a bunch of errors when the ramdisk boots up and when iOS 9 boots you will see Setup.app. In this case, `ctrl+c` out of a999activator and run it again.
 
 * I have extensively tested a999activator with 2 different iPhone 6S Pluses. I have literally activated iOS 15.8.4 100+ times with the same Apple ID. I have written support for iPhone 6S and iPhone SE because it should work the same. iPads in theory can work too in a future update, as well as any other A9 device not currently supported. But if your having some issues with a 6S or SE let me know because I don't have those yet. Also I use MacPorts, I added Homebrew support and it should work fine but again that wasn't tested...
 

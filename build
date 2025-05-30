@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# EzRe build script for Xbox 360 Media Center.
-version="1.0"
-program="a999"
+# EzRe build script for A999Activator.
+version="1.0.1"
+program=a999
 turdus_merula=turdus_m3rula-v1.0.4
-release_name="a999-activator-v$version"-mac-os-universal
+release_name=a999-activator-v$version-mac-os-universal
 
 cd "$(dirname "$0")"
 
@@ -33,6 +33,7 @@ else
 fi
 
 release_files="$program *.md $turdus_merula Legacy-iOS-Kit plutil"
+# Convert from xml to binary like other iOS 9 launch daemons.
 plutil -convert binary1 com.alex.activate.plist.xml -o "$release_name"/com.alex.activate.plist
 cp -r ${release_files} "$release_name"
 touch "$release_name"/.firstrun
