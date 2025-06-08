@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # EzRe build script for A999Activator.
-version="1.0.1"
+version="1.0.2"
 program=a999
 turdus_merula=turdus_m3rula-v1.0.4
 release_name=a999-activator-v$version-mac-os-universal
@@ -32,7 +32,7 @@ else
     sed -i'' -E "s|^turdus_merula=.*|turdus_merula=$turdus_merula|" $program
 fi
 
-release_files="$program *.md $turdus_merula Legacy-iOS-Kit plutil"
+release_files="$program *.md $turdus_merula Legacy-iOS-Kit plutil activate"
 # Convert from xml to binary like other iOS 9 launch daemons.
 plutil -convert binary1 com.alex.activate.plist.xml -o "$release_name"/com.alex.activate.plist
 cp -r ${release_files} "$release_name"
