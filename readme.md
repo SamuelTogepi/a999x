@@ -6,31 +6,12 @@ A completely automatic solution that tether downgrades to iOS 9.2-9.3.3, jailbre
 
 For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many iPhones and no one really knows why. Apple seems to have broken something during downgrade party. After [turdus_merula](https://sep.lol) dropped there were more iOS 9 users then there had been in years, many now expierencing the activation issue (including myself). A999Activator takes all the public knowlege on activating A9 iOS 9 devices and uses some [new](#how-this-works) techniques to make the proccess as seemless as possible for the end user. I hope you enjoy this as much as I. I've been out of the scene mostly for years, so if you can contribute to this and make it better please do!
 
-## IMPORTANT INFORMATION:
-
-The following information will be given to you while A999Activator is running as well. There are some limitations for certain iOS 9 versions you need to be aware of. I recommend downgrading to iOS 9.2 or iOS 9.2.1 (I daily drove 9.2 for a week!).
-
-* You can't sign into iCloud when you get to Setup.app on iOS 9.2 and iOS 9.2.1. If you attempt to sign-in to your iCloud on these versions it will never complete and you'll need to reboot the iPhone. **Instead on those versions don't sign into iCloud until you complete Setup.app. Then go to the Settings.app from the home screen and sign into iCloud (that works!).**
-
-* You can't sign into iMessage on iOS 9.3, iOS 9.3.1, iOS 9.3.2, and iOS 9.3.3. **There is no workaround (yet??) other then to use iOS 9.2 or iOS 9.2.1 which can sign in and work.** This is unfortunate for iPhone SE users.
-
-* You can't sign into FaceTime on iOS 9.3, iOS 9.3.1, iOS 9.3.2, and iOS 9.3.3. **There is no workaround (yet??) other then to use iOS 9.2 or iOS 9.2.1 which can sign in and work.** This is unfortunate for iPhone SE users.
-
-| iOS Version | Cellular | WiFi | iMessage | FaceTime | App Store | iCloud Sign in (Setup.app) | iCloud Sign in (Settings app) | Sideloading |
-|-------------|----------|------|----------|----------|-----------|----------------------------|------------------------------|-------------|
-| 9.2         | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
-| 9.2.1       | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
-| 9.3         | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-| 9.3.1       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-| 9.3.2       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-| 9.3.3       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-
-
 | [Github](https://github.com/alex-free/a999activator) | [Homepage](https://github.com/alex-free/a999activator) | [Reddit Post](https://www.reddit.com/r/setupapp/comments/1kux73s/a999activator_automatic_downgrade_to_ios_9_with/) |
 
 # Table Of Contents
 
 * [Downloads](#downloads)
+* [Important Info](#important-info)
 * [Usage](#usage)
 * [Additional Info](#additional-info)
 * [How This Works](#how-this-works)
@@ -55,29 +36,36 @@ Changes:
 
 [Previous versions](changelog.md).
 
+## Important Info
+
+The following information will be given to you while A999Activator is running as well. There are some limitations for certain iOS 9 versions you need to be aware of. I recommend downgrading to iOS 9.2 or iOS 9.2.1 (I daily drove 9.2 for a week!).
+
+* You can't sign into iCloud initially when you get to Setup.app on iOS 9.2 and iOS 9.2.1. If you attempt to sign-in to your iCloud while in Setup.app on these versions it will never complete and you'll need to reboot the iPhone. **Instead on these versions don't sign into iCloud until after you complete Setup.app. Go to the Settings.app from the home screen and sign into iCloud there.**
+
+* You can't sign into iMessage or FaceTime on iOS 9.3, iOS 9.3.1, iOS 9.3.2, and iOS 9.3.3. **There is no workaround (yet??) other then to use iOS 9.2 or iOS 9.2.1 (if not an iPhone SE user) which can sign in and work.**
+
+| iOS Version | Cellular | WiFi | iMessage | FaceTime | App Store | iCloud Sign in (Setup.app) | iCloud Sign in (Settings app) | Sideloading |
+|-------------|----------|------|----------|----------|-----------|----------------------------|------------------------------|-------------|
+| 9.2         | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
+| 9.2.1       | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
+| 9.3         | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+| 9.3.1       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+| 9.3.2       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+| 9.3.3       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+
 ## Usage
 
 Requirements: You need Mac OS 10.12 or newer, and you need either the [MacPorts](https://www.macports.org/install.php) or  [Homebrew](https://brew.sh/) package manager installed.
 
 1) Download the latest release and extract it.
 
-2) Execute it. 
+2) Execute it in Terminal.app (this is a command line program).
 
 _For tethered restores (no blobs):_
 
-For tethered restores (no blobs):
-
-`a999activator/a999` or 
-
-`cd a999activator`
-
 `./a999`
 
-_For untethered restores (with blobs) (UNTESTED PLEASE OPEN AN [ISSUE](https://github.com/alex-free/a999activator/issues/new) IF THIS WORKS OR DOESN'T WORK):_
-
-`a999activator/a999 -b myblob.shsh` or 
-
-`cd a999activator`
+_For untethered restores (with blobs)_ **(UNTESTED PLEASE OPEN AN [ISSUE](https://github.com/alex-free/a999activator/issues/new) IF THIS WORKS OR DOESN'T WORK):**
 
 `./a999 -b myblob.shsh`
 
@@ -85,7 +73,7 @@ _For untethered restores (with blobs) (UNTESTED PLEASE OPEN AN [ISSUE](https://g
 
 ## Additional Info
 
-* It is EXTREMELY IMPORTANT TO SIGN OUT OF FIND MY iPHONE ON iOS 15.8.4 BEFORE THE DOWNGRADE. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPhone off).
+* It is important to sign out of Find My iPhone on iOS 15.8.4 before the downgrade. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPhone off).
 
 * On the first run of a999activator, there are many additional steps in the proccess that will trigger automatically for you. Subsequent runs will be signifigantly shorter and take fewer steps as it caches needed data from the first run locally in the `data` folder. That `data` folder is very important and personalized to your iPhone. You should back it up because you can put it back in any future a999activator release and it will use that data when it detects your iPhone!.
 
@@ -93,7 +81,7 @@ _For untethered restores (with blobs) (UNTESTED PLEASE OPEN AN [ISSUE](https://g
 
 * In a similar vein to above, if you fail to enter DFU mode when prompted or the custom ramdisk fails to boot a999activator notices this and goes back to correct it.
 
-* Very rarely Turdus Merula fails to restore iOS 9. This is an A9 Turdus Merula issue. If this occurs you will see a bunch of errors when the ramdisk boots up and when iOS 9 boots you will see Setup.app. In this case, `ctrl+c` out of a999activator and run it again.
+* Very rarely Turdus Merula fails to restore iOS 9. This is an A9 Turdus Merula issue. If this occurs you will see a bunch of errors when the ramdisk boots up the second time. In this case, `ctrl+c` out of a999activator and run it again.
 
 * I have extensively tested a999activator with 2 different iPhone 6S Pluses. I have literally activated iOS 15.8.4 100+ times with the same Apple ID. I have written support for iPhone 6S and iPhone SE because it should work the same. iPads in theory can work too in a future update, as well as any other A9 device not currently supported. But if your having some issues with a 6S or SE let me know because I don't have those yet. Also I use MacPorts, I added Homebrew support and it should work fine but again that wasn't tested...
 
@@ -119,7 +107,7 @@ Remember, this is all automatic (as possible)!
 
 8) User is prompted to sign in to Wi-Fi and then go to http://jbme.ddw.nu to enable the Jailbreak.
 
-9) Jailbreak triggers the previously in-active launch daemon. Launch daemon extracts all activation tarball files that were put on / into the proper /var places. It then modifies a plist file for activation needed for 9.2.1-9.3.3. After that it deletes itself and all other temp files. Setup.app is then re-enabled, and the iPhone is rebooted into Recovery mode.
+9) Jailbreak triggers the previously in-active launch daemon. Launch daemon extracts all activation tarball files that were put on / into the proper /var places. It then modifies a plist file for activation needed for iOS 9.3.x. After that it deletes itself and all other temp files. Setup.app is then re-enabled, and the iPhone is rebooted into Recovery mode.
 
 10) iPhone is booted into iOS 9.2-9.3.3. Activation status is checked and if successful a special boot script is created dynamically in the same directory as the a999 command which can be used to boot the device from Recovery Mode in the future.
 
