@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # EzRe build script for A999Activator.
-version="1.0.2"
+version="1.0.3"
 program=a999
-turdus_merula=turdus_m3rula-v1.0.4
+turdus_merula=turdus_m3rula_1.1_b0ea3ee7_macos
 release_name=a999-activator-v$version-mac-os-universal
 
 cd "$(dirname "$0")"
