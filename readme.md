@@ -6,6 +6,12 @@ A completely automatic solution that tether downgrades to iOS 9.2-9.3.3, jailbre
 
 For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many iPhones and no one really knows why. Apple seems to have broken something during downgrade party. After [turdus_merula](https://sep.lol) dropped there were more iOS 9 users then there had been in years, many now expierencing the activation issue (including myself). A999Activator takes all the public knowlege on activating A9 iOS 9 devices and uses some [new](#how-this-works) techniques to make the proccess as seemless as possible for the end user. I hope you enjoy this as much as I. I've been out of the scene mostly for years, so if you can contribute to this and make it better please do!
 
+* To find out what iOS version is right for you to downgrade to, please check the [Important Info](#important-info) section.
+
+* If your curious how this works, please check the [How This Works](#how-this-works) section.
+
+* Please check the [FAQ](#faq) section for more information and solutions. If you have an issue, please open a [Github issue](https://github.com/alex-free/a999activator/issues/new?template=issue.md) and fill out the information.
+
 | [Github](https://github.com/alex-free/a999activator) | [Homepage](https://github.com/alex-free/a999activator) | [Reddit Post](https://www.reddit.com/r/setupapp/comments/1kux73s/a999activator_automatic_downgrade_to_ios_9_with/) |
 
 # Table Of Contents
@@ -13,20 +19,25 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 * [Downloads](#downloads)
 * [Important Info](#important-info)
 * [Usage](#usage)
-* [Additional Info](#additional-info)
+* [FAQ](#faq)
 * [How This Works](#how-this-works)
-* [What about iOS 9.0.x/9.1/9.3.4/9.3.5??](#what-about-ios-90x91934935)
 * [Credits](#credits)
 * [License](#license)
 * [Building](build.md)
 
 ## Downloads
 
-### Version 1.0.3 (10/3/2025)
+### Version 1.0.4 (10/3/2025)
 
-* [a999activator-v1.0.3-mac-os-universal.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.3/a999-activator-v1.0.3-mac-os-universal.zip) _For Mac OS 10.12 and newer_
+* [a999activator-v1.0.4-mac-os-universal.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.4/a999-activator-v1.0.4-mac-os-universal.zip) _For Mac OS 10.12 and newer_
 
-Changes:
+* Improved UX prompts and messags.
+
+* Preperations for Linux release.
+
+* Improved documentation.
+
+Changes in version 1.0.3 (10/3/2025):
 
 * Fixes [issue 4](https://github.com/alex-free/a999activator/issues/4) which caused an iPhone 6S set to downgrade to iOS 9.2 to mistakenly downgrade to iOS 9.2.1 instead.
 
@@ -48,22 +59,27 @@ Changes:
 
 ## Important Info
 
-The following information will be given to you while A999Activator is running as well. There are some limitations for certain iOS 9 versions you need to be aware of. I recommend downgrading to iOS 9.2 or iOS 9.2.1 (I daily drove 9.2 for a week!).
+If you have an iPhone 6S or iPhone 6S plus, is it is recommended to downgrade to iOS 9.2 or iOS 9.2.1. These versions have everything working:
 
-* You can't sign into iCloud initially when you get to Setup.app on iOS 9.2 and iOS 9.2.1. If you attempt to sign-in to your iCloud while in Setup.app on these versions it will never complete and you'll need to reboot the iPhone. **Instead on these versions don't sign into iCloud until after you complete Setup.app. Go to the Settings.app from the home screen and sign into iCloud there.**
+* Activation.
+* iMessage sign-in.
+* FaceTime sign-in.
+* iCloud sign-in.
+* Cellular/carrier SIM functionality.
+* Sideloading (but you can also just install cracked IPAs).
 
-* You can't sign into iMessage or FaceTime on iOS 9.3, iOS 9.3.1, iOS 9.3.2, and iOS 9.3.3. **There is no workaround (yet??) other then to use iOS 9.2 or iOS 9.2.1 (if not an iPhone SE user) which can sign in and work.**
+On iOS 9.3, 9.3.1, 9.3.2, and 9.3.3 all of the above is true **except**:
 
-* You can't setup Touch-ID in Setup.app. **Complete Setup.app and then setup Touch ID in Settings.app.**
+* iMessage sign-in.
+* FaceTime sign-in.
 
-| iOS Version | Cellular | WiFi | iMessage | FaceTime | App Store | iCloud Sign in (Setup.app) | iCloud Sign in (Settings app) | Sideloading |
-|-------------|----------|------|----------|----------|-----------|----------------------------|------------------------------|-------------|
-| 9.2         | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
-| 9.2.1       | Yes      | Yes  | Yes      | Yes      | Yes       | No                         | Yes                          | Yes         |
-| 9.3         | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-| 9.3.1       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-| 9.3.2       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
-| 9.3.3       | Yes      | Yes  | No       | No       | Yes       | Yes                        | Yes                          | Yes         |
+## Setup.app Guide
+
+The following information will be given to you while A999Activator is running as well, but I'd like to list it here as well.
+
+* Don't sign into iCloud _initially_ when you get to Setup.app if your downgrading to iOS 9.2 or iOS 9.2.1. If you attempt to sign-in to your iCloud while in Setup.app on these versions it will never complete and you'll need to reboot the iPhone, confusing A999 Activator. **Instead on these versions don't sign into iCloud until AFTER you complete Setup.app. Go to the Settings.app from the home screen and sign into iCloud there.** This only affects iOS 9.2 and iOS 9.2.1, so iOS 9.3, 9.3.1, and 9.3.3 can be signed in from Setup.app as normal.
+
+* You can't setup Touch-ID in Setup.app, it will do nothing when you try. So instead **complete Setup.app and then setup Touch ID in Settings.app.**
 
 ## Usage
 
@@ -83,21 +99,34 @@ _For untethered restores (with blobs)_ **(UNTESTED PLEASE OPEN AN [ISSUE](https:
 
 3) Follow the prompts.
 
-## Additional Info
+## FAQ
 
-* It is important to sign out of Find My iPhone on iOS 15 before the downgrade. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPhone off).
+### iMessage and or FaceTime not activating on iOS 9.2/iOS 9.2.1, I thought they worked on those versions?
 
-* On the first run of a999activator, there are many additional steps in the proccess that will trigger automatically for you. Subsequent runs will be signifigantly shorter and take fewer steps as it caches needed data from the first run locally in the `data` folder. That `data` folder is very important and personalized to your iPhone. You should back it up because you can put it back in any future a999activator release and it will use that data when it detects your iPhone!.
+Sometimes it can take a few tries for it to login correctly. If that is not working, this can also happen because Find My iPhone was left on. It is important to sign out of Find My iPhone on iOS 15 before the downgrade. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPhone off).
 
-* Certian aspects of Turdus_ra1n (exploiting SEP, booting exploited iOS) can fail the first time. This is why A999activator has very extensive if-fail-then-retry logic. It will eventually work, and it won't continue the proccess until it does. So don't be discouraged when it says `Something went wrong, lets try that again` because it's really just working as intended and trying again (sometimes many times to get that PTEBlock) does eventually work out. One exception to this is if turdusra1n/turdus_merula crashes at `- <Log> checkm8 setup stage`. If your stuck here for a long time (more then 30 seconds) I would `ctrl+c` to exit a999activator, unpulg the USB-A to Lightning cable from the USB port on the Mac, then plug it back in before running the `a999` command again. Unfortunately I don't have a better solution for this yet as it is a turdus merula problem.
+### Why Does It Take So Long?
 
-* In a similar vein to above, if you fail to enter DFU mode when prompted or the custom ramdisk fails to boot a999activator notices this and goes back to correct it.
+On the first run of a999activator, there are many additional steps in the proccess that will trigger automatically for you. **Subsequent runs will be signifigantly shorter and take fewer steps as it caches needed data from the first run locally in the `data` folder.** That `data` folder is very important and personalized to your iPhone. You should back it up because you can put it back in any future a999activator release and it will use that data when it detects your iPhone!.
 
-* Very rarely Turdus Merula fails to restore iOS 9. This is an A9 Turdus Merula issue. If this occurs you will see a bunch of errors when the ramdisk boots up the second time. In this case, `ctrl+c` out of a999activator and run it again.
+### How Are Errors Handled?
 
-* I have extensively tested a999activator with 2 different iPhone 6S Pluses. I have literally activated iOS 15 100+ times with the same Apple ID. I have written support for iPhone 6S and iPhone SE because it should work the same. iPads in theory can work too in a future update, as well as any other A9 device not currently supported. But if your having some issues with a 6S or SE let me know because I don't have those yet.
+Certian aspects of Turdus_ra1n (exploiting SEP, booting exploited iOS) can fail the first time. This is why A999activator has very extensive if-fail-then-retry logic. It will eventually work, and it won't continue the proccess until it does. So don't be discouraged when it says `Something went wrong, lets try that again` because it's really just working as intended and trying again (sometimes many times to get that PTEBlock) does eventually work out. One exception to this is if turdusra1n/turdus_merula crashes at `- <Log> checkm8 setup stage`. If your stuck here for a long time (more then 30 seconds) I would `ctrl+c` to exit a999activator, unpulg the USB-A to Lightning cable from the USB port on the Mac, then plug it back in before running the `a999` command again. Unfortunately I don't have a better solution for this yet as it is a turdus merula problem. In a similar vein to above, if you fail to enter DFU mode when prompted or the custom ramdisk fails to boot a999activator notices this and goes back to correct it.
 
-* A999activator will ALWAY restore iOS 10.2.1 first, even if your already on iOS 9. This is required because on iOS 9.3.x you might get greyed out WiFi even after being on 9.3.x already, and it ensures the final iOS 9 restore works correctly.
+### What Has A999Activator Been Tested On?
+
+I have extensively tested a999activator with 2 different iPhone 6S Pluses with MacBook Airs on Mac OS 12 as well as a Mac mini on Mac OS 10.12. It is reported to work on even the latest Mac OS.
+
+I have literally activated iOS 15 100+ times with the same Apple ID. I have written support for iPhone 6S and iPhone SE because it should work the same. 
+
+### What About iPads with A9(X)?
+
+iPads in theory can work too in a future update, as well as any other A9 device not currently supported.
+
+### What about iOS 9.0.x/9.1/9.3.4/9.3.5??
+
+So iOS 9.0.x/iOS 9.1/9.3.4/9.3.5 have jailbreaks. The problem here is that these jailbreaks require an activated iOS 9 iPhone. Chicken and egg problem, we need a jailbreak to activate. This could be developed in the future if it can be done from a ramdisk entrypoint similar to how iOS 9.2-9.3.3 are handled and then triggered with some kind of untether or Safari exploit.
+
 
 ## How This Works
 
@@ -109,7 +138,7 @@ Remember, this is all automatic (as possible)!
 
 3) Boots a custom ramdisk in Recovery mode to create iOS 15 activation tarball files which are transferred to the computer.
 
-4) Downgrades to iOS 10.3.3 to work around 2 issues (random rebooting to Recovery Mode and random disabled Wifi in iOS 9.3.x). This is the first step if activation files have already been backed up.
+4) Downgrades to iOS 10.2.1 to work around 2 issues (random rebooting to Recovery Mode and random disabled Wifi in iOS 9.3.x). This is the first step if activation files have already been backed up.
 
 5) Downgrades to target iOS (9.2-9.3.3).
 
@@ -122,10 +151,6 @@ Remember, this is all automatic (as possible)!
 9) Jailbreak triggers the previously in-active launch daemon. Launch daemon extracts all activation tarball files that were put on / into the proper /var places. It then modifies a plist file for activation needed for iOS 9.3.x. After that it deletes itself and all other temp files. Setup.app is then re-enabled, and the iPhone is rebooted into Recovery mode.
 
 10) iPhone is booted into iOS 9.2-9.3.3. Activation status is checked and if successful a special boot script is created dynamically in the same directory as the a999 command which can be used to boot the device from Recovery Mode in the future.
-
-## What about iOS 9.0.x/9.1/9.3.4/9.3.5??
-
-So iOS 9.0.x/iOS 9.1/9.3.4/9.3.5 have jailbreaks. The problem here is that these jailbreaks require an activated iOS 9 iPhone. Chicken and egg problem, we need a jailbreak to activate. This could be developed in the future if it can be done from a ramdisk entrypoint similar to how iOS 9.2-9.3.3 are handled and then triggered with some kind of untether or Safari exploit.
 
 ## Credits
 

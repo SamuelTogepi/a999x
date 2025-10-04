@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=1.0.3
+version=1.0.4
 turdus_merula=turdus_m3rula_1.1_b0ea3ee7_macos
 
 echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2025 Alex Free (3-BSD)\nhttps://github.com/alex-free/a999activator\n"
@@ -14,13 +14,12 @@ serial=
 not_normal=false
 # This is for getting PTEBlock/SHCBlock/boot-* files from an existing downgraded iPhone.
 regen_boot=false
-# Forces no check for activation records, because well...
-restore_ios_15=false
 file=
 # Untethered if not empty.
 blob_generator=
 blob_file=
 use_blobs=
+restore_ios_15=false
 
 info_prompt() {
     case "$ver" in
@@ -105,6 +104,9 @@ restore_ios_15_for_device() {
         restore_ipsw https://updates.cdn-apple.com/2025FallFCS/fullrestores/082-66999/ECD8F46B-AF4B-454F-B6A4-55FEA09A10F9/iPhone_4.0_64bit_15.8.5_19H394_Restore.ipsw
     fi
     
+    # Clean up.
+    restore_ios_15=false
+
     wait_for_normal_mode
     echo "iOS 15.8.5 has been restored! It will take some additional time for it to start up into Setup.app, please wait..."
  
@@ -249,17 +251,12 @@ got_all_activation_files() {
 }
 
 get_activation() {
-    # Check if user followed all preperation steps correctly so that all activation files are available.
-    if got_all_activation_files; then
-        echo "Info: Existing activation files detected."
-        return
-    fi
-
     # Need to get activation files.
-    echo "Obtaining activation records..."
-    restore_ios_15=false
+    echo -e "Existing activation files not backed up yet.\nObtaining activation files..."
+    # Hail Mary if on latest iOS 15 already.
     ios_version=$(Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null | grep "ProductVersion" | awk '{print $2}')
 
+    # Set $not_normal when first connecting/detecting iPhone if it is in Recovery or DFU Mode.
     if [ "$not_normal" == "true" ]; then
         echo "Your iPhone is not in normal mode, so iOS version can not be determined. Restoring iPhone to iOS 15.8.5."
         restore_ios_15=true
@@ -270,7 +267,7 @@ get_activation() {
         did_you_follow_instructions
     fi
 
-    if [ $restore_ios_15 == "true" ]; then
+    if [ "$restore_ios_15" == "true" ]; then
         restore_ios_15_for_device
     fi
 
@@ -356,7 +353,7 @@ get_activation() {
     send "exit\r"
 
     # Transfer tars to computer.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r -P 6414 root@127.0.0.1:/mnt1/activate data/$device-$serial/activate
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r -P 6414 root@127.0.0.1:/mnt1/activate data/$device-$serial
     expect {
         "continue connecting" {
             send "yes\r"
@@ -388,19 +385,19 @@ EOF
 
     iproxy_kill
 
-    # Check to see if user follows instructions.
+    # Check to see if user follows instructions.  If not when we get back to restore_ipsw() it will prompt to go through get_activation() again.
     if ! got_all_activation_files; then
         echo "Error: not all activation files were backed up. Please make sure you complete all steps before activation files are backed up. A999 Activator will try getting activation files again."
+        read -p "Press any key to continue..."
     fi
 }
 
 restore_ipsw() {
-    if [ $restore_ios_15 == "false" ]; then
+    # If we are using this to restore to iOS 15, don't get stuck in an infinite loop.
+    if [ "$restore_ios_15" == "false" ]; then
         while ! got_all_activation_files; do
             get_activation
         done
-    else
-        restore_ios_15=false
     fi
     
     enter_recovery
