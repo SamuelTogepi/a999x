@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # EzRe build script for A999Activator.
-version="1.0.4"
+version="1.0.5"
 program=a999
-turdus_merula=turdus_m3rula_1.1_b0ea3ee7_macos
-release_name=a999-activator-v$version-mac-os-universal
+release_name=a999-activator-v$version
+set -e
 
 cd "$(dirname "$0")"
 
@@ -26,17 +26,38 @@ fi
 
 if [ "$bsd_sed" == "true" ]; then
     sed -i '' -E "s|^version=.*|version=$version|" $program
-    sed -i '' -E "s|^turdus_merula=.*|turdus_merula=$turdus_merula|" $program
 else
     sed -i'' -E "s|^version=.*|version=$version|" $program
-    sed -i'' -E "s|^turdus_merula=.*|turdus_merula=$turdus_merula|" $program
 fi
 
-release_files="$program *.md $turdus_merula Legacy-iOS-Kit plutil activate"
+release_files="$program *.md bin payload"
+cp -r ${release_files} $release_name
+
 # Convert from xml to binary like other iOS 9 launch daemons.
-plutil -convert binary1 com.alex.activate.plist.xml -o "$release_name"/com.alex.activate.plist
-cp -r ${release_files} "$release_name"
-touch "$release_name"/.firstrun
+os="$(uname)"
+
+if [[ "$os" == "Linux" ]]; then
+
+    if ! command -v plistutil &>/dev/null; then
+        echo "Info: root privilages are required to install plistutil:"
+
+        if command -v apt &>/dev/null; then
+            sudo apt install -y libplist-utils
+        elif command -v dnf &>/dev/null; then
+            sudo dnf install -y libplist
+        elif command -v pacman &>/dev/null; then
+            sudo pacman -Sy --noconfirm libplist
+        else
+            echo "Error: could not detect your package manager. You must install libplist manually before the build script can continue."
+            exit 1
+        fi
+    fi
+
+    plistutil -f bin -i com.alex.activate.plist.xml -o $release_name/payload/com.alex.activate.plist
+elif [[ "$os" == "Darwin" ]]; then
+    plutil -convert binary1 com.alex.activate.plist.xml -o $release_name/payload/com.alex.activate.plist
+fi
+
 chmod -R 777 $release_name
 zip -r $release_name.zip $release_name
 

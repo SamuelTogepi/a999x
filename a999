@@ -1,62 +1,81 @@
 #!/bin/bash
 
-version=1.0.4
-turdus_merula=turdus_m3rula_1.1_b0ea3ee7_macos
-
+version=1.0.5
 echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2025 Alex Free (3-BSD)\nhttps://github.com/alex-free/a999activator\n"
 
-cd "$(dirname "$0")"
-
 # Global vars.
+os="$(uname)"
+arch="$(uname -m)"
 device=
 ver=
 serial=
 not_normal=false
-# This is for getting PTEBlock/SHCBlock/boot-* files from an existing downgraded iPhone.
-regen_boot=false
 file=
-# Untethered if not empty.
-blob_generator=
-blob_file=
-use_blobs=
+# Used to check if we need iOS 15 to be restored to get activation files, it doubles as a disable to prevent a recursive infinite loop when calling the restore_ipsw() func as well.
 restore_ios_15=false
 
-info_prompt() {
-    case "$ver" in
-        9.2*)
-            echo "IMPORTANT INFORMATION FOR iOS 9.2 AND iOS 9.2.1 USERS (WHICH YOU ARE): DO NOT SIGN IN TO ICLOUD IN SETUP.APP! It will not work. Instead, complete Setup.app without signing in and get to the home screen. Then, sign in to iCloud with the Settings app!"
-            ;;
-        9.3*)
-            echo "IMPORTANT INFORMATION FOR iOS 9.3, iOS 9.3.1, iOS 9.3.2, AND iOS 9.3.3 USERS (WHICH YOU ARE): iMessage and FaceTime do not work yet!"
-            if [ $device != "iphone-se" ]; then
-                echo "If you need iMessage and or FaceTime downgrade to iOS 9.2 or iOS 9.2.1 instead."
-            fi
-            ;;
-    esac
+# OS/arch detection.
+# Add all the self-contained binaries we need to the $PATH used within this script.
+
+if [ "$os" = "Linux" ]; then
+    
+    real_portable_folder="$(dirname "$(readlink -f "$0")")"
+
+    if [ "$arch" = "x86_64" ]; then
+        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/x86_64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-amd64/bin"
+    elif [ "$arch" = "arm64" ]; then
+        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/arm64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-arm64/bin"
+    else
+        echo "Error: Linux on $arch is not supported."
+        exit 1
+    fi
+
+    echo "Detected Linux on $arch."
+
+elif [[ "$os" == "Darwin" ]]; then
+
+    real_portable_folder="$(dirname "$(stat -f "$0")")"
+    PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/macos:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_macos/bin"
+    echo "Detected Mac OS on $arch."
+else
+    echo "Error: $os is not supported."
+    exit 1
+fi
+
+echo "PATH: $PATH"
+
+# Trick lifted from https://docs.website-msw.pages.dev/docs/get-started/installing-palera1n-linux/.
+usbmuxd_reset() {
+    if [ "$os" == "Linux" ]; then
+        systemctl stop usbmuxd > /dev/null 2>&1
+        # If usbmuxd is still running kill it forcibly.
+        killall -9 usbmuxd > /dev/null 2>&1
+        usbmuxd -f -p &
+    fi
 }
 
 # Note: this only does so much because it appears that if the iPhone was in DFU Mode and then exited it will auto-boot=true...
 enforce_recovery() {
-    Legacy-iOS-Kit/bin/macos/irecovery -c "setenv auto-boot false"
-    Legacy-iOS-Kit/bin/macos/irecovery -c "saveenv"
+    irecovery -c "setenv auto-boot false"
+    irecovery -c "saveenv"
 }
 
 pair_iphone() {
-    while ! Legacy-iOS-Kit/bin/macos/idevicepair pair 2>/dev/null; do
+    while ! idevicepair pair 2>/dev/null; do
         
-        if [[ "$tried_once" == "true" ]]; then
+        if [ "$tried_once" = "true" ]; then
             break;
         fi
 
         # Because we break above, never gets here on try 2.
-        if [[ "$1" == "first_time" ]]; then
+        if [ "$1" = "first_time" ]; then
             echo "No iPhone detected. It may not be paired to your computer if it is indeed in Normal Mode."
         fi
 
         read -p "If your iPhone has a passcode, unlock your iPhone and then tap trust if prompted. If your not being prompted, unplug the USB-A to Lightning cable from your Mac then plug it back in. Then presss enter."
         
         # The first time we call this is on program startup, and we don't even know if a device is connected so we don't want to get into a normal mode check loop if say user connects via Recovery or DFU mode device after we are already here.
-        if [[ "$1" == "first_time" ]]; then
+        if [ "$1" = "first_time" ]; then
             tried_once=true
             echo "Checking one more time for iPhone in Normal Mode to see if it has been paired..."
         fi
@@ -67,16 +86,16 @@ pair_iphone() {
 }
 
 iproxy_start() {
-    Legacy-iOS-Kit/bin/macos/iproxy 6414 22 > /dev/null 2>&1 &
+    iproxy 6414 22 > /dev/null 2>&1 &
 }
 
 iproxy_kill() {
-    killall iproxy > /dev/null 2>&1    
+    killall iproxy > /dev/null 2>&1
 }
 
 did_you_follow_instructions() {
     pair_iphone
-    read -p "* Activate the iPhone. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should be in in the iPhone with an active carrier. 
+    read -p "* Activate the iPhone. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should be in the iPhone with an active carrier. 
 
 * Sign in to iCloud and complete Setup.app. Get to the home screen. 
 
@@ -88,7 +107,7 @@ After all of the above is true press any key to continue..."
 
 is_activated() {
 
-    if Legacy-iOS-Kit/bin/macos/ideviceinfo | grep -q "^ActivationState: Activated$"; then
+    if ideviceinfo | grep -q "^ActivationState: Activated$"; then
         return 0
     else
         return 1
@@ -114,11 +133,17 @@ restore_ios_15_for_device() {
 }
 
 boot_turdusra1n() {
+    usbmuxd_reset
     wait_for_recovery
+
     # Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus. It appears to be an issue with turdus merula because it won't show as much output (never gets to bootx) but still returns 0.
-    while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
-        while ! $turdus_merula/bin/turdusra1n -TP data/$device-$serial/$ver/block/*-pteblock2.bin; do 
-        echo "Something went wrong, lets try that again."
+    while irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
+        usbmuxd_reset
+        echo "Info: If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPhone."
+
+        while ! turdusra1n -TP data/$device-$serial/$ver/block/*-pteblock2.bin; do
+            usbmuxd_reset
+            echo "Something went wrong, lets try that again."
         done
 
         # Give time to exit Recovery Mode so this is not executed again erronously.
@@ -130,9 +155,9 @@ boot_turdusra1n() {
 }
 
 enter_recovery() {    
-    if ! Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then
+    if ! irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then
         # If not in Recovery Mode assume in Normal Mode and attempt to enter Recovery Mode. If this fails we are already in Recovery Mode or possibly DFU Mode so we don't want to show an error."
-        if Legacy-iOS-Kit/bin/macos/ideviceenterrecovery "$(Legacy-iOS-Kit/bin/macos/ideviceinfo -k UniqueDeviceID 2>/dev/null)" >/dev/null 2>&1; then
+        if ideviceenterrecovery "$(ideviceinfo -k UniqueDeviceID 2>/dev/null)" >/dev/null 2>&1; then
             # If this succeded lets tell the user what's going on. If it didn't succed then that's ok we don't need to tell them anything due to the above reasoning....
             echo "Entering Recovery Mode, please wait..."
         fi
@@ -143,20 +168,20 @@ enter_recovery() {
 }
 
 wait_for_normal_mode() {
-    while ! Legacy-iOS-Kit/bin/macos/ideviceinfo >/dev/null 2>&1; do
+    while ! ideviceinfo >/dev/null 2>&1; do
        # Ensure we are paired, fixes issues when booting iOS 9.
-        Legacy-iOS-Kit/bin/macos/idevicepair pair >/dev/null 2>&1
+        idevicepair pair >/dev/null 2>&1
         echo "Waiting for iPhone to boot..."
         sleep 1
     done
 }
 
 wait_for_recovery() {
-     while ! Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
-        if Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
+     while ! irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
+        if irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
             echo "DFU Mode detected. Please press the HOME+POWER buttons until your iPhone reboots into Recovery Mode. Do not stop pressing those buttons until you get to Recovery Mode."
 
-            while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "DFU Mode"; do
+            while irecovery -m 2>/dev/null | grep -q "DFU Mode"; do
                 sleep 1
             done
 
@@ -171,17 +196,9 @@ wait_for_recovery() {
 
 turdursra1n_pwn() {
     wait_for_recovery
+    usbmuxd_reset
 
-    while ! $turdus_merula/bin/turdusra1n -ED; do
-        echo "Something went wrong. Lets try that again..."
-        sleep 1
-    done
-}
-
-turdursra1n_pwn_blobs() {
-    wait_for_recovery
-
-    while ! $turdus_merula/bin/turdusra1n -EDb $blob_generator; do
+    while ! turdusra1n -ED; do
         echo "Something went wrong. Lets try that again..."
         sleep 1
     done
@@ -191,12 +208,6 @@ retry_pwn() {
     echo "Something went wrong, lets try that again."
     turdursra1n_pwn
 }
-
-retry_pwn_blobs() {
-    echo "Something went wrong, lets try that again."
-    turdursra1n_pwn_blobs
-}
-
 
 start_rd() {
     # Enfore Recovery Mode.
@@ -211,14 +222,16 @@ start_rd() {
         # Clear any existing iproxy...
         iproxy_kill
         # Attempt to boot ramdisk...
-        (cd Legacy-iOS-Kit && ./restore.sh --no-version-check --no-internet-check --sshrd-boot-rd-only)
+        (cd bin/Legacy-iOS-Kit && ./restore.sh --no-version-check --no-internet-check --sshrd-boot-rd-only)
+        # Restart after ramdisk script kills our usbmuxd.
+        usbmuxd_reset   
         # Start our own proxy for USB SSH fresh...
         iproxy_kill
         iproxy_start
         echo "Waiting 5 seconds before testing SSH ramdisk connection, please standby..."
         sleep 5
         # SSH connection check.
-        ssh_connected=$(Legacy-iOS-Kit/bin/macos/sshpass -p 'alpine' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1 'echo 1' 2>/dev/null)
+        ssh_connected=$(sshpass -p 'alpine' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1 'echo 1' 2>/dev/null)
     done
 
     # Need to reset this for ramdisk round 2.
@@ -254,7 +267,7 @@ get_activation() {
     # Need to get activation files.
     echo -e "Existing activation files not backed up yet.\nObtaining activation files..."
     # Hail Mary if on latest iOS 15 already.
-    ios_version=$(Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null | grep "ProductVersion" | awk '{print $2}')
+    ios_version=$(ideviceinfo 2>/dev/null | grep "ProductVersion" | awk '{print $2}')
 
     # Set $not_normal when first connecting/detecting iPhone if it is in Recovery or DFU Mode.
     if [ "$not_normal" == "true" ]; then
@@ -271,125 +284,128 @@ get_activation() {
         restore_ios_15_for_device
     fi
 
-    # Send it...
-    start_rd
+    # Makes sure we don't stop until we actually get the activation files.
+    while ! got_all_activation_files; do
+        # Send it...
+        start_rd
 
-    expect <<EOF
-    # Mount.
-    spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1
-    expect {
-        "continue connecting" {
-            send "yes\r"
-            exp_continue
+        expect <<EOF
+        # Mount.
+        spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1
+        expect {
+            "continue connecting" {
+                send "yes\r"
+                exp_continue
+            }
+            "password:" {
+                send "alpine\r"
+            }
         }
-        "password:" {
-            send "alpine\r"
+
+        expect "#"
+        send "mount_filesystems\r"
+        expect "#"
+        
+        # Ramdisk allows RW of / on unjailbroken iOS 15.8.5. on /private/var we have stable RO. RW sometimes doesn't work, so use / as scratch dir.
+        send "mkdir /mnt1/activate\r"
+        expect "#"
+        
+        # Copy activation_records.
+        send "cp -a /mnt2/containers/Data/System/*/Library/activation_records /mnt1/activate/activation_records\r"
+        expect "#"
+
+        # Copy data_ark.plist.
+        send "cp -a /mnt2/containers/Data/System/*/Library/activation_records/../internal/data_ark.plist /mnt1/activate\r"
+        expect "#"
+
+        # Copy IC-Info.sisv for notifications/ft/imessage/etc
+        send "cp -a /mnt2/mobile/Library/FairPlay/iTunes_Control/iTunes/IC-Info.sisv /mnt1/activate\r"
+        expect "#"
+
+        # Copy com.apple.commcenter.device_specific_nobackup.plist
+        send "cp -a /mnt2/wireless/Library/Preferences/com.apple.commcenter.device_specific_nobackup.plist /mnt1/activate\r"
+        expect "#"
+        
+        # Copy com.apple.factorydata
+        send "cp -a /mnt1/System/Library/Caches/com.apple.factorydata /mnt1/activate/com.apple.factorydata\r"
+        expect "#"
+
+        # Create tars.
+        send "cd /mnt1/activate\r"
+        expect "#"
+        
+        # activation_records.
+        send "tar zcf activation_records.tar.gz activation_records\r"
+        expect "#"
+
+        # data_ark.plist.
+        send "tar zcf data_ark.plist.tar.gz data_ark.plist\r"
+        expect "#"
+        send "rm data_ark.plist\r"
+        expect "#"
+        
+        # IC-Info.sisv. 
+        # Silence error: "tar: copyfile pack (IC-Info.sisv) failed: No such file or directory" because we still get the file fine.
+        send "tar zcf IC-Info.sisv.tar.gz IC-Info.sisv > /dev/null 2>&1\r"
+        expect "#"
+        send "rm IC-Info.sisv\r"
+        expect "#"
+
+        # com.apple.commcenter.device_specific_nobackup.plist.
+        send "tar zcf com.apple.commcenter.device_specific_nobackup.plist.tar.gz com.apple.commcenter.device_specific_nobackup.plist\r"
+        expect "#"
+        send "rm com.apple.commcenter.device_specific_nobackup.plist\r"
+        expect "#"
+
+        # com.apple.factorydata.
+        send "tar zcf com.apple.factorydata.tar.gz com.apple.factorydata\r"
+        expect "#"
+
+        # Delete all directories.
+        send "rm -rf */\r"
+        expect "#"
+
+        send "exit\r"
+
+        # Transfer tars to computer.
+        spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r -P 6414 root@127.0.0.1:/mnt1/activate data/$device-$serial
+        expect {
+            "continue connecting" {
+                send "yes\r"
+                exp_continue
+            }
+            "password:" {
+                send "alpine\r"
+            }
         }
-    }
+        expect eof  
 
-    expect "#"
-    send "mount_filesystems\r"
-    expect "#"
-    
-    # Ramdisk allows RW of / on unjailbroken iOS 15.8.5. on /private/var we have stable RO. RW sometimes doesn't work, so use / as scratch dir.
-    send "mkdir /mnt1/activate\r"
-    expect "#"
-    
-    # Copy activation_records.
-    send "cp -a /mnt2/containers/Data/System/*/Library/activation_records /mnt1/activate/activation_records\r"
-    expect "#"
-
-    # Copy data_ark.plist.
-    send "cp -a /mnt2/containers/Data/System/*/Library/activation_records/../internal/data_ark.plist /mnt1/activate\r"
-    expect "#"
-
-    # Copy IC-Info.sisv for notifications/ft/imessage/etc
-    send "cp -a /mnt2/mobile/Library/FairPlay/iTunes_Control/iTunes/IC-Info.sisv /mnt1/activate\r"
-    expect "#"
-
-    # Copy com.apple.commcenter.device_specific_nobackup.plist
-    send "cp -a /mnt2/wireless/Library/Preferences/com.apple.commcenter.device_specific_nobackup.plist /mnt1/activate\r"
-    expect "#"
-    
-    # Copy com.apple.factorydata
-    send "cp -a /mnt1/System/Library/Caches/com.apple.factorydata /mnt1/activate/com.apple.factorydata\r"
-    expect "#"
-
-    # Create tars.
-    send "cd /mnt1/activate\r"
-    expect "#"
-    
-    # activation_records.
-    send "tar zcf activation_records.tar.gz activation_records\r"
-    expect "#"
-
-    # data_ark.plist.
-    send "tar zcf data_ark.plist.tar.gz data_ark.plist\r"
-    expect "#"
-    send "rm data_ark.plist\r"
-    expect "#"
-    
-    # IC-Info.sisv. 
-    # Silence error: "tar: copyfile pack (IC-Info.sisv) failed: No such file or directory" because we still get the file fine.
-    send "tar zcf IC-Info.sisv.tar.gz IC-Info.sisv > /dev/null 2>&1\r"
-    expect "#"
-    send "rm IC-Info.sisv\r"
-    expect "#"
-
-    # com.apple.commcenter.device_specific_nobackup.plist.
-    send "tar zcf com.apple.commcenter.device_specific_nobackup.plist.tar.gz com.apple.commcenter.device_specific_nobackup.plist\r"
-    expect "#"
-    send "rm com.apple.commcenter.device_specific_nobackup.plist\r"
-    expect "#"
-
-    # com.apple.factorydata.
-    send "tar zcf com.apple.factorydata.tar.gz com.apple.factorydata\r"
-    expect "#"
-
-    # Delete all directories.
-    send "rm -rf */\r"
-    expect "#"
-
-    send "exit\r"
-
-    # Transfer tars to computer.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r -P 6414 root@127.0.0.1:/mnt1/activate data/$device-$serial
-    expect {
-        "continue connecting" {
-            send "yes\r"
-            exp_continue
+        # Unmount and Reboot.
+        spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1
+        expect {
+            "continue connecting" {
+                send "yes\r"
+                exp_continue
+            }
+            "password:" {
+                send "alpine\r"
+            }
         }
-        "password:" {
-            send "alpine\r"
-        }
-    }
-    expect eof  
 
-    # Unmount and Reboot.
-    spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 6414 root@127.0.0.1
-    expect {
-        "continue connecting" {
-            send "yes\r"
-            exp_continue
-        }
-        "password:" {
-            send "alpine\r"
-        }
-    }
-
-    expect "#"
-    send "reboot\r"
-    expect "closed by remote host."
-    expect eof
+        expect "#"
+        send "reboot\r"
+        expect "closed by remote host."
+        expect eof
 EOF
 
-    iproxy_kill
+        iproxy_kill
 
-    # Check to see if user follows instructions.  If not when we get back to restore_ipsw() it will prompt to go through get_activation() again.
-    if ! got_all_activation_files; then
-        echo "Error: not all activation files were backed up. Please make sure you complete all steps before activation files are backed up. A999 Activator will try getting activation files again."
-        read -p "Press any key to continue..."
-    fi
+        # Check to see if user follows instructions.  If not when we get back to restore_ipsw() it will prompt to go through get_activation() again.
+        if ! got_all_activation_files; then
+            echo "Error: not all activation files were backed up. Please make sure you complete all steps before activation files are backed up. A999 Activator will try getting activation files again."
+            read -p "Press any key to continue..."
+        fi
+    done
 }
 
 restore_ipsw() {
@@ -428,7 +444,7 @@ restore_ipsw() {
         echo "Getting SHCBlock..."
         turdursra1n_pwn
 
-        while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver --get-shcblock data/ipsw/$file; do
+        while ! echo 1 | turdus_merula -C data/$device-$serial/$ver --get-shcblock data/ipsw/$file; do
             retry_pwn
         done
 
@@ -436,45 +452,31 @@ restore_ipsw() {
         enforce_recovery
     done
 
-    # PTEblock (Tethered ONLY).
-    # If $use_blobs is empty then we are tethered.
-    # If $use_blobs is false then we are going to do an untethered restore for the target iOS eventually, but we are currently doing tethered restores to get there (15.8.5, then 10.2.1).
-    # If $use_blobs is empty and blob_file is empty then we are just doing a tethered restore without blobs.
-    # If $use_blobs is true and $blob_file is not empty we are doing an untethered restore to the target iOS RIGHT NOW.
-    if [ "$use_blobs" = "false" ] || [ -z "$blob_file" ]; then
+    # PTEblock.
+    # BUG (in turdus_merula since v1.1). This can exit ok but it really didn't get the PTE block so we need to check again even after it returns 0.
+    while ! find data/$device-$serial/$ver/block -type f -name "*-pteblock2.bin" 2>/dev/null | grep -q . 2>/dev/null; do
         echo "Getting PTEBlock..."
-        # BUG (in turdus_merula since v1.1). This can exit ok but it really didn't get the PTE block so we need to check again even after it returns 0.
-        while ! find data/$device-$serial/$ver/block -type f -name "*-pteblock2.bin" 2>/dev/null | grep -q . 2>/dev/null; do
-            turdursra1n_pwn
-
-            while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver --get-pteblock --load-shcblock data/$device-$serial/$ver/block/*-shcblock2.bin data/ipsw/$file; do
-                retry_pwn
-            done
-
-            wait_for_recovery
-            enforce_recovery
-        done
-    fi
-
-    echo "Restoring..."
-    # Restore (Tethered).
-    if [ "$use_blobs" = "false" ] || [ -z "$blob_file" ]; then
         turdursra1n_pwn
-        
-        while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver -o --load-pteblock data/$device-$serial/$ver/block/*-pteblock2.bin data/ipsw/$file; do
+
+        while ! echo 1 | turdus_merula -C data/$device-$serial/$ver --get-pteblock --load-shcblock data/$device-$serial/$ver/block/*-shcblock2.bin data/ipsw/$file; do
             retry_pwn
         done
-    else
-        # Restore (Untethered).
-        turdursra1n_pwn_blobs
 
-        while ! echo 1 | $turdus_merula/bin/turdus_merula -C data/$device-$serial/$ver -w --load-shsh $blob_file --load-shcblock data/$device-$serial/$ver/block/*-shcblock2.bin data/ipsw/$file; do
-            retry_pwn_blobs
-        done
-    fi
+        wait_for_recovery
+        enforce_recovery
+    done
+
+    echo "Restoring..."
+    # Restore.
+    turdursra1n_pwn
+    usbmuxd_reset
+
+    while ! echo 1 | turdus_merula -C data/$device-$serial/$ver -o --load-pteblock data/$device-$serial/$ver/block/*-pteblock2.bin data/ipsw/$file; do
+        retry_pwn
+    done
 }
 
-restore_10_2_1() {
+downgrade() {
     # We need to do this to prevent an issue where the device can crash randomly and enter DFU mode on the final restored firmware lower then 10.2.1. This also fixes a weird issue when you restore 9.3.x after being on 9.3.x, it can sometimes grey out the Wi-Fi. This was originally 10.2.1, but due to an issue with restoring/booting the ramdisk this now is 10.2.1 (which is HFS+) https://www.reddit.com/r/LegacyJailbreak/comments/1nj598d/issue_downgrading_a9_devices_to_ios_9x_using/.
     # When we end the activation get ramdisk we ALWAYS will be in Recovery Mode.
     if [ $device == "iphone-6s-plus" ]; then
@@ -485,20 +487,7 @@ restore_10_2_1() {
         restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96769-20170112-61558B4E-D81D-11E6-9610-F301D55B5B9D/iPhoneSE_10.2.1_14D27_Restore.ipsw
     fi
 
-    # If set to false we have blobs for the target version.
-    if [ "$use_blobs" = "false" ]; then
-        use_blobs=true
-    fi
-
     restore_ipsw $1
-
-    # iPhone with blobs is going to boot into Normal Mode/Setup.app.
-    if [ "$use_blobs" = "true" ]; then
-        wait_for_normal_mode
-        pair_iphone
-    fi
-
-    # Will enter Recovery if in normal mode for untether.
     start_rd
 
     expect <<EOF
@@ -539,7 +528,7 @@ restore_10_2_1() {
     expect eof
 
     # Transfer launch daemon com.alex.activate.plist to host.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 com.alex.activate.plist root@127.0.0.1:/mnt1/Library/LaunchDaemons
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 payload/com.alex.activate.plist root@127.0.0.1:/mnt1/Library/LaunchDaemons
     expect {
         "continue connecting" {
             send "yes\r"
@@ -552,7 +541,7 @@ restore_10_2_1() {
     expect eof
 
     # Transfer activate script to host.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 activate root@127.0.0.1:/mnt1/usr/bin
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 payload/activate root@127.0.0.1:/mnt1/usr/bin
     expect {
         "continue connecting" {
             send "yes\r"
@@ -565,7 +554,7 @@ restore_10_2_1() {
     expect eof
 
     # Transfer freeze.tar to host.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 Legacy-iOS-Kit/resources/jailbreak/freeze.tar root@127.0.0.1:/mnt1
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 bin/Legacy-iOS-Kit/resources/jailbreak/freeze.tar root@127.0.0.1:/mnt1
     expect {
         "continue connecting" {
             send "yes\r"
@@ -578,7 +567,7 @@ restore_10_2_1() {
     expect eof
 
     # Transfer launchctl.tar to host.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 Legacy-iOS-Kit/resources/jailbreak/launchctl.tar root@127.0.0.1:/mnt1
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 bin/Legacy-iOS-Kit/resources/jailbreak/launchctl.tar root@127.0.0.1:/mnt1
     expect {
         "continue connecting" {
             send "yes\r"
@@ -591,7 +580,7 @@ restore_10_2_1() {
     expect eof
 
     # Transfer io.pangu93.loader.plist to host.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 Legacy-iOS-Kit/resources/jailbreak/io.pangu93.loader.plist root@127.0.0.1:/mnt1/Library/LaunchDaemons
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 bin/Legacy-iOS-Kit/resources/jailbreak/io.pangu93.loader.plist root@127.0.0.1:/mnt1/Library/LaunchDaemons
     expect {
         "continue connecting" {
             send "yes\r"
@@ -604,7 +593,7 @@ restore_10_2_1() {
     expect eof
 
     # Transfer plutil (from com.bingner.plutil_0.2.1_iphoneos-arm.deb) to host.
-    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 plutil root@127.0.0.1:/mnt1/usr/bin/plutil
+    spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 payload/plutil root@127.0.0.1:/mnt1/usr/bin/plutil
     expect {
         "continue connecting" {
             send "yes\r"
@@ -718,70 +707,131 @@ restore_10_2_1() {
     expect "#"
     send "umount /mnt2\r"
     expect "#"
-    # This will only allow the SHSHBlob restored unthethered iPhone to boot to normal mode.
-    send "nvram auto-boot=true\r"
-    expect "#"
     send "reboot\r"
     expect "closed by remote host."
     expect eof
 EOF
 
     iproxy_kill
+    boot_turdusra1n
+    pair_iphone
+    echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPhone will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 30 seconds so that the LAST STEP can be completed!"
+    sleep 30
+    boot_turdusra1n
 
-    # Coming from a regular boot (untethered)
-    if [ "$use_blobs" = true ]; then
-        wait_for_normal_mode
-         echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Do not sign in to iCloud just yet! Once the jailbreak is enabled, your iPhone will automatically reboot and activation will be restored!"
-        info_prompt
-    else
-        boot_turdusra1n
-        pair_iphone
-        echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPhone will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 30 seconds so that the LAST STEP can be completed!"
-        sleep 30
-        boot_turdusra1n
+    if ! is_activated; then
+        echo "Error: activation was not restored. Please try again."
+        exit 1
+    fi
 
-        if is_activated; then
+    if [ $device == "iphone-6s-plus" ]; then
+        boot_script=boot6sp-$ver-$serial
+    elif [ $device == "iphone-6s" ]; then      
+        boot_script=boot6s-$ver-$serial
+    elif [ $device == "iphone-se" ]; then
+        boot_script=bootse-$ver-$serial
+    fi
 
-            if [ $device == "iphone-6s-plus" ]; then
-                boot_script=boot6sp-$ver-$serial
-            elif [ $device == "iphone-6s" ]; then      
-                boot_script=boot6s-$ver-$serial
-            elif [ $device == "iphone-se" ]; then
-                boot_script=bootse-$ver-$serial
-            fi
-
-            # Delete any existing boot* scripts for this serial number.
-            rm -f *-$serial
-            
-            # Generate boot* script
+    # Delete any existing boot* scripts for this serial number.
+    rm -f *-$serial
+    
+    # Generate boot* script
     echo -e '#!/bin/bash
 
-    cd "$(dirname "$0")"
+os="$(uname)"
+arch="$(uname -m)"
 
-    # Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus.
-    while Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
-        while ! '$turdus_merula'/bin/turdusra1n -TP data/'$device'-'$serial'/'$ver'/block/*-pteblock2.bin; do 
-            echo "Something went wrong, lets try that again..."
-        done
+# OS/arch detection.
+# Add all the self-contained binaries we need to the $PATH used within this script.
 
-        echo "Please wait, checking for proper booting in 20 seconds"
-        sleep 20
-    done
-    echo "Enable the jailbreak with http://jbme.ddw.nu in Safari!"
-
-    ' > $boot_script
-
-            chmod 755 $boot_script
-            # Clips the last character otherwise in the echo below.
-            boot_script=$(echo "$boot_script" | tr -d '\r')
-            echo "Activation was restored! You need to enable the jailbreak with http://jbme.ddw.nu in Safari everytime you boot, but your done! If your phone is powered off or rebooted, it will first boot to Recovery Mode. You'll need to run the $boot_script command (now found in the same folder as the a999 command) to boot it into normal mode."
-
-            info_prompt
-        else
-            echo "Error: activation was not restored. Please try again."
-            exit 1.
-        fi
+if [ "$os" = "Linux" ]; then
+    real_portable_folder="$(dirname "$(readlink -f "$0")")"
+    
+    if [ "$arch" = "x86_64" ]; then
+        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/x86_64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-amd64/bin"
+    elif [ "$arch" = "arm64" ]; then
+        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/arm64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-arm64/bin"
+    else
+        echo "Error: Linux on $arch is not supported."
+        exit 1
     fi
+
+    echo "Detected Linux on $arch."
+
+elif [[ "$os" == "Darwin" ]]; then
+    real_portable_folder="$(dirname "$(stat -f "$0")")"
+    PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/macos:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_macos/bin"
+    echo "Detected Mac OS on $arch."
+else
+    echo "Error: $os is not supported."
+    exit 1
+fi
+
+echo "PATH: $PATH"
+cd "$real_portable_folder"
+
+usbmuxd_reset() {
+    if [ "$os" = "Linux" ]; then
+        systemctl stop usbmuxd > /dev/null 2>&1
+        # If usbmuxd is still running kill it forcibly.
+        killall -9 usbmuxd > /dev/null 2>&1
+        usbmuxd -f -p > /dev/null 2>&1 &
+    fi
+}
+
+if [ "$os" = "Linux" ]; then
+
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: root privileges are required to boot your iPhone. Please execute $0 with sudo or as root to continue." >&2
+        exit 1
+    fi
+
+    usbmuxd_reset
+fi
+
+# When this script exits, automatically restart usbmuxd as normal. We are root at this point that this takes effect (on Linux).
+cleanup() 
+{
+    if [ "$os" = "Linux" ]; then 
+        usbmuxd_reset
+    fi
+}
+trap cleanup EXIT
+
+# Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus.
+while irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
+    usbmuxd_reset
+    echo "If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPhone."
+
+    while ! turdusra1n -TP data/'$device'-'$serial'/'$ver'/block/*-pteblock2.bin; do 
+        usbmuxd_reset
+        echo "Something went wrong, lets try that again..."
+    done
+
+    echo "Please wait, checking for proper booting in 20 seconds"
+    sleep 20
+done
+
+echo "Enable the jailbreak with http://jbme.ddw.nu in Safari!"
+
+' > $boot_script
+
+    chmod 755 $boot_script
+    # Clips the last character otherwise in the echo below.
+    boot_script=$(echo "$boot_script" | tr -d '\r')
+    echo "Activation was restored! You need to enable the jailbreak with http://jbme.ddw.nu in Safari everytime you boot, but your done! If your phone is powered off or rebooted, it will first boot to Recovery Mode. You'll need to run the $boot_script command (now found in the same folder as the a999 command) to boot it into normal mode."
+
+    case "$ver" in
+        9.2*)
+            echo "IMPORTANT INFORMATION FOR iOS 9.2 AND iOS 9.2.1 USERS (WHICH YOU ARE): DO NOT SIGN IN TO ICLOUD IN SETUP.APP! It will not work. Instead, complete Setup.app without signing in and get to the home screen. Then, sign in to iCloud with the Settings app!"
+            ;;
+        9.3*)
+            echo "IMPORTANT INFORMATION FOR iOS 9.3, iOS 9.3.1, iOS 9.3.2, AND iOS 9.3.3 USERS (WHICH YOU ARE): iMessage and FaceTime do not work yet!"
+            if [ $device != "iphone-se" ]; then
+                echo "If you need iMessage and or FaceTime downgrade to iOS 9.2 or iOS 9.2.1 instead."
+            fi
+            ;;
+    esac
 }
 
 iphone_6s_firmware_select() {
@@ -801,31 +851,31 @@ iphone_6s_firmware_select() {
     do
         case $opt in
             "9.2 (13C75) (12/8/2015)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.2/031-29220-20151203-557E81AA-8D8B-11E5-BEE6-AD638B8BECEB/iPhone8,1_9.2_13C75_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2/031-29220-20151203-557E81AA-8D8B-11E5-BEE6-AD638B8BECEB/iPhone8,1_9.2_13C75_Restore.ipsw"
                 break;
                 ;;
             "9.2.1 (13D15) (1/19/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.2.1/031-47635-20160119-97350056-B969-11E5-A65F-634D8FD31F8F/iPhone8,1_9.2.1_13D15_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2.1/031-47635-20160119-97350056-B969-11E5-A65F-634D8FD31F8F/iPhone8,1_9.2.1_13D15_Restore.ipsw"
                 break;
                 ;;
             #"9.2.1 (13D20) (2/18/2016)") Can't use because jbme doesn't support it
-                #restore_10_2_1 "http://appldnld.apple.com/ios9.2.1/031-49377-20160217-4BB1908C-D44D-11E5-9900-0952919DCAD8/iPhone8,1_9.2.1_13D20_Restore.ipsw"
+                #downgrade "http://appldnld.apple.com/ios9.2.1/031-49377-20160217-4BB1908C-D44D-11E5-9900-0952919DCAD8/iPhone8,1_9.2.1_13D20_Restore.ipsw"
                 #break;
                 #;;
             "9.3 (13E234) (3/21/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3/031-20814-20160321-50FF38D4-EAA8-11E5-AAA8-C479BD379832/iPhone8,1_9.3_13E234_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3/031-20814-20160321-50FF38D4-EAA8-11E5-AAA8-C479BD379832/iPhone8,1_9.3_13E234_Restore.ipsw"
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3.1/031-55114-20160331-09A05894-F5E6-11E5-861F-21CB2D794EB1/iPhone8,1_9.3.1_13E238_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.1/031-55114-20160331-09A05894-F5E6-11E5-861F-21CB2D794EB1/iPhone8,1_9.3.1_13E238_Restore.ipsw"
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.3.2/031-62431-20160516-5E51F038-13A9-11E6-ACFA-61D9400DF7EB/iPhone8,1_9.3.2_13F69_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-62431-20160516-5E51F038-13A9-11E6-ACFA-61D9400DF7EB/iPhone8,1_9.3.2_13F69_Restore.ipsw"
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3.3/031-60536-20160718-06EE469E-4378-11E6-8185-A7F759E0E9B6/iPhone8,1_9.3.3_13G34_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60536-20160718-06EE469E-4378-11E6-8185-A7F759E0E9B6/iPhone8,1_9.3.3_13G34_Restore.ipsw"
                 break;
                 ;;
             "Exit")
@@ -857,31 +907,31 @@ iphone_6s_plus_firmware_select() {
     do
         case $opt in
             "9.2 (13C75) (12/8/2015)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.2/031-29142-20151203-53B314A8-8D8B-11E5-B7FA-9A638B8BECEB/iPhone8,2_9.2_13C75_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2/031-29142-20151203-53B314A8-8D8B-11E5-B7FA-9A638B8BECEB/iPhone8,2_9.2_13C75_Restore.ipsw"
                 break;
                 ;;
             "9.2.1 (13D15) (1/19/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.2.1/031-47609-20160119-798F784C-B969-11E5-8729-F24C8FD31F8F/iPhone8,2_9.2.1_13D15_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2.1/031-47609-20160119-798F784C-B969-11E5-8729-F24C8FD31F8F/iPhone8,2_9.2.1_13D15_Restore.ipsw"
                 break;
                 ;;
             #"9.2.1 (13D20) (2/18/2016)") can't use because jbme doesn't support it
-                #restore_10_2_1 "http://appldnld.apple.com/ios9.2.1/031-49073-20160217-4BB05046-D44D-11E5-9D30-0852919DCAD8/iPhone8,2_9.2.1_13D20_Restore.ipsw"
+                #downgrade "http://appldnld.apple.com/ios9.2.1/031-49073-20160217-4BB05046-D44D-11E5-9D30-0852919DCAD8/iPhone8,2_9.2.1_13D20_Restore.ipsw"
                 #break;
                 #;;
             "9.3 (13E234) (3/21/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3/031-28376-20160321-51006FEC-EAA8-11E5-AEC6-D279BD379832/iPhone8,2_9.3_13E234_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3/031-28376-20160321-51006FEC-EAA8-11E5-AEC6-D279BD379832/iPhone8,2_9.3_13E234_Restore.ipsw"
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3.1/031-54811-20160331-099896CC-F5E6-11E5-88BA-1ACB2D794EB1/iPhone8,2_9.3.1_13E238_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.1/031-54811-20160331-099896CC-F5E6-11E5-88BA-1ACB2D794EB1/iPhone8,2_9.3.1_13E238_Restore.ipsw"
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.3.2/031-62657-20160516-02ECC2F8-13AA-11E6-AFB3-D9DA400DF7EB/iPhone8,2_9.3.2_13F69_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-62657-20160516-02ECC2F8-13AA-11E6-AFB3-D9DA400DF7EB/iPhone8,2_9.3.2_13F69_Restore.ipsw"
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3.3/031-60985-20160718-5C7A1B06-4378-11E6-8743-CEFC59E0E9B6/iPhone8,2_9.3.3_13G34_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60985-20160718-5C7A1B06-4378-11E6-8743-CEFC59E0E9B6/iPhone8,2_9.3.3_13G34_Restore.ipsw"
                 break;
                 ;;
             "Exit")
@@ -909,19 +959,19 @@ iphone_se_firmware_select() {
     do
         case $opt in
             "9.3 (13E233) (3/21/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3/031-20815-20160321-5102B932-EAA8-11E5-A488-C779BD379832/iPhone8,4_9.3_13E233_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3/031-20815-20160321-5102B932-EAA8-11E5-A488-C779BD379832/iPhone8,4_9.3_13E233_Restore.ipsw"
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3.1/031-55507-20160331-09A917D6-F5E6-11E5-BFDA-32CB2D794EB1/iPhone8,4_9.3.1_13E238_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.1/031-55507-20160331-09A917D6-F5E6-11E5-BFDA-32CB2D794EB1/iPhone8,4_9.3.1_13E238_Restore.ipsw"
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/ios9.3.2/031-61688-20160516-6A0F5782-13A7-11E6-93C9-A4D6400DF7EB/iPhone8,4_9.3.2_13F69_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-61688-20160516-6A0F5782-13A7-11E6-93C9-A4D6400DF7EB/iPhone8,4_9.3.2_13F69_Restore.ipsw"
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                restore_10_2_1 "http://appldnld.apple.com/iOS9.3.3/031-60143-20160718-06E90A30-4378-11E6-81DC-8EF759E0E9B6/iPhone8,4_9.3.3_13G34_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60143-20160718-06E90A30-4378-11E6-81DC-8EF759E0E9B6/iPhone8,4_9.3.3_13G34_Restore.ipsw"
                 break;
                 ;;
             "Exit")
@@ -934,9 +984,44 @@ iphone_se_firmware_select() {
     done
 }
 
-# Begin actual execution. Check for the existence of the binary launch daemon which is generated for the release by the build script.
-if [ ! -f "com.alex.activate.plist" ]; then
-    echo "Error: can not find com.alex.activate.plist. This most likely means you are trying to execute a999 from the source tree, rather then a release which is not allowed. Please execute the build command in the source tree and cd into the built release. If you downloaded an a999activator release and are getting this error, you release is incomplete and missing a neccesary file. Please redownload the release and run a999activator again."
+# Begin actual execution. 
+
+# Symlink safe cd into script dir.
+if [ "$os" = "Linux" ]; then
+
+    # On Linux we need root.
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: a999 must be ran with root privileges on Linux. Please execute it with sudo or as the root user to continue."
+        exit 1
+    fi
+
+    cd "$(dirname "$(readlink -f "$0")")"
+
+elif [ "$os" = "Darwin" ]; then
+# No readlink in base Mac OS BSD Subsystem.
+    cd "$(dirname "$(stat -f "$0")")"
+    # All these executables are signed so that is the only think preventing gatekeeper from allowing the script to be automatic is the quarintine attributes.
+    # Remove any quarintine attribute on $turdus_merula
+    xattr -rc $turdus_merula/bin
+    # Remove any quarintine attribute on Legacy-iOS-Kit.
+    xattr -rc $legacy_ios_kit_tools
+else
+    echo "Error: unsupported operating system!"
+    exit 1
+fi
+
+# When this script exits, automatically restart usbmuxd as normal. We are root at this point that this takes effect (on Linux).
+cleanup() 
+{
+    if [ "$os" = "Linux" ]; then 
+        usbmuxd_reset
+    fi
+}
+trap cleanup EXIT
+
+# Check for the existence of the binary launch daemon which is generated for the release by the build script.
+if [ ! -f "payload/com.alex.activate.plist" ]; then
+    echo "Error: can not find payload/com.alex.activate.plist. This most likely means you are trying to execute a999 from the source tree, rather then a release which is not allowed. Please execute the build command in the source tree and cd into the built release. If you downloaded an a999activator release and are getting this error, you release is incomplete and missing a neccesary file. Please redownload the release and run a999activator again."
     exit 1
 fi
 
@@ -960,21 +1045,7 @@ if [ "$1" == "-u" ]; then
 
     # Don't print error messages if no boot-* files exist.
     cp -rv "$2"/boot-* . 2>/dev/null 
-elif [ "$1" == "-b" ]; then
-    # Get SHSH!
-    if [ -f "$2" ]; then
-        blob_file="$2"
-        blob_generator=$(grep -A1 "<key>generator</key>" "$blob_file" | grep "<string>" | sed -E 's/.*<string>(.*)<\/string>.*/\1/'
-)
-        # By setting this to false we will restore possibly iOS 15.8.5 and iOS 10.2.1 tethered. Then right before the target version is restored we will set it to true by detecting it was set to false before. Always quote this when it could not be set to anything when checking.
-        use_blobs=false
-        echo "Untethered downgrade with blobs enabled! (Generator: $blob_generator)"
-    else
-        echo "Error: To use blobs for an untethered downgrade you must provide the .shsh file as the third argument! I.e. 
-
-./a999 -b myblobs.shsh"
-        exit 1
-    fi
+    exit 0
 fi
 
 if [ ! -d data ]; then
@@ -986,40 +1057,26 @@ fi
 # Create ipsw directory if it does not exist.
 mkdir -p data/ipsw
 
-# Basically I handle the dependency stuff for Legacy-iOS-Kit right here and now. My fork of Legacy-iOS-Kit doesn't do this when ran because it makes the UX janky and it's much better to just do it here and now.
-if [ -f ".firstrun" ]; then
-    echo "Detecting package manager..."
-    if command -v port > /dev/null; then
-        echo -e "Package manager: MacPorts\nInfo: Installing dependencies requires root privilages.\n"
-        sudo port -N install bash curl git libusb
-        rm .firstrun
-    elif command -v brew > /dev/null; then
-        echo "Found Homebrew!"
-        brew install bash curl git libusb
-        rm .firstrun
-    else
-        echo "You need to install Homebrew or the MacPorts package manager."
-        exit 1
-    fi
+if [[ ! -f "bin/Legacy-iOS-Kit/resources/firstrun" ]]; then
+    echo "Installing dependencies..."
 
+    (cd bin/Legacy-iOS-Kit && sudo ./restore.sh --no-version-check --no-internet-check)
     # This is to account for LibUSB being just installed.
-    echo -e "Please do the following to ensure A999 Activator can talk to your iPhone:\n\n * Disconnect your USB-A Lightning cable from your mac.\n* Connect the USB-A Lightning cable to the Mac wih your iPhone connected.\n"
+
+    echo -e "Please do the following to ensure A999 Activator can talk to your iPhone:\n\n* Disconnect your USB-A Lightning cable from your mac.\n* Connect the USB-A Lightning cable to the Mac wih your iPhone connected.\n"
 
     read -p "After doing the above, press any key to continue..."
 fi
 
-# All these executables are signed so that is the only think preventing gatekeeper from allowing the script to be automatic is the quarintine attributes.
-# Remove any quarintine attribute on $turdus_merula
- xattr -rc $turdus_merula/bin
-# Remove any quarintine attribute on Legacy-iOS-Kit.
-xattr -rc Legacy-iOS-Kit/bin/macos
+# Fresh USB connection.
+usbmuxd_reset
 
 echo "Searching for an iPhone 6S, iPhone 6S Plus, or iPhone SE connected to this computer with a USB-A Lightning cable. Please wait..."
 
 # Need the serial number to identify what cached data to use. This is available in Recovery Mode and Normal mode, but not in DFU Mode so we don't allow this to run until we get into Recovery Mode if DFU Mode is detected.
 echo "Checking for iPhone in DFU Mode..."
 
-if Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
+if irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
     wait_for_recovery
 fi
 
@@ -1028,18 +1085,18 @@ while true; do
 
     echo "Checking for iPhone in Recovery Mode..."
 
-    if Legacy-iOS-Kit/bin/macos/irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then
+    if irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then
         echo "Info: iPhone was found in Recovery Mode."
         not_normal=true
-        serial=$(Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null | grep -i 'SRNM:' | awk '{print $2}')
+        serial=$(irecovery -q 2>/dev/null | grep -i 'SRNM:' | awk '{print $2}')
 
-        if Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null |  grep '^PRODUCT: iPhone8,2'; then
+        if irecovery -q 2>/dev/null |  grep '^PRODUCT: iPhone8,2'; then
             echo "iPhone 6S Plus detected!"
             device=iphone-6s-plus
-        elif Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPhone8,1'; then
+        elif irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPhone8,1'; then
             echo "iPhone 6S detected!"
             device=iphone-6s
-        elif Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPhone8,4'; then
+        elif irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPhone8,4'; then
             echo "iPhone SE detected!"
             device=iphone-se 
         else
@@ -1047,13 +1104,13 @@ while true; do
             exit 1
         fi
 
-        if Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null | grep -q '^CPID: 0x8003'; then
+        if irecovery -q 2>/dev/null | grep -q '^CPID: 0x8003'; then
             echo "Info: TSMC A9 chip detected!"
             break
-        elif Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null | grep -q '^CPID: 0x8001'; then
+        elif irecovery -q 2>/dev/null | grep -q '^CPID: 0x8001'; then
             echo "Info: Samsung A9X chip detected! You must have an iPad Pro!"
             break
-        elif Legacy-iOS-Kit/bin/macos/irecovery -q 2>/dev/null | grep -q '^CPID: 0x8000'; then
+        elif irecovery -q 2>/dev/null | grep -q '^CPID: 0x8000'; then
             echo "Info: Samsung A9 chip detected!"
             break
         fi
@@ -1063,15 +1120,15 @@ while true; do
         echo "Checking for iPhone in Normal Mode..."
         pair_iphone first_time
     
-        serial=$(Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null | grep -i '^SerialNumber:' | awk '{print $2}')
+        serial=$(ideviceinfo 2>/dev/null | grep -i '^SerialNumber:' | awk '{print $2}')
         
-        if Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,2' > /dev/null 2>&1; then
+        if ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,2' > /dev/null 2>&1; then
             echo "iPhone 6S Plus detected!"
             device=iphone-6s-plus
-        elif Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,1' > /dev/null 2>&1; then
+        elif ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,1' > /dev/null 2>&1; then
             echo "iPhone 6S detected!"
             device=iphone-6s
-        elif Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,4' > /dev/null 2>&1; then
+        elif ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,4' > /dev/null 2>&1; then
             echo "iPhone SE detected!"
             device=iphone-se
         else
@@ -1079,13 +1136,13 @@ while true; do
             exit 1
         fi
 
-        if Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null |  grep -q '^HardwarePlatform: s8003'; then
+        if ideviceinfo 2>/dev/null |  grep -q '^HardwarePlatform: s8003'; then
             echo "Info: TSMC A9 chip detected!"
             break
-        elif Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null |  grep -q '^HardwarePlatform: s8001'; then
+        elif ideviceinfo 2>/dev/null |  grep -q '^HardwarePlatform: s8001'; then
             echo "Info: Samsung A9X chip detected! You must have an iPad Pro!"
             break
-        elif Legacy-iOS-Kit/bin/macos/ideviceinfo 2>/dev/null |  grep -q '^HardwarePlatform: s8000'; then
+        elif ideviceinfo 2>/dev/null |  grep -q '^HardwarePlatform: s8000'; then
             echo "Info: Samsung A9 chip detected!"
             break
         fi
