@@ -16,10 +16,9 @@ restore_ios_15=false
 
 # OS/arch detection.
 # Add all the self-contained binaries we need to the $PATH used within this script.
+real_portable_folder="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "$os" = "Linux" ]; then
-    
-    real_portable_folder="$(dirname "$(readlink -f "$0")")"
 
     if [ "$arch" = "x86_64" ]; then
         PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/x86_64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-amd64/bin"
@@ -33,8 +32,6 @@ if [ "$os" = "Linux" ]; then
     echo "Detected Linux on $arch."
 
 elif [[ "$os" == "Darwin" ]]; then
-
-    real_portable_folder="$(dirname "$(stat -f "$0")")"
     PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/macos:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_macos/bin"
     echo "Detected Mac OS on $arch."
 else
@@ -42,6 +39,7 @@ else
     exit 1
 fi
 
+cd "$real_portable_folder"
 echo "PATH: $PATH"
 
 # Trick lifted from https://docs.website-msw.pages.dev/docs/get-started/installing-palera1n-linux/.
@@ -743,9 +741,9 @@ arch="$(uname -m)"
 
 # OS/arch detection.
 # Add all the self-contained binaries we need to the $PATH used within this script.
+real_portable_folder="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "$os" = "Linux" ]; then
-    real_portable_folder="$(dirname "$(readlink -f "$0")")"
     
     if [ "$arch" = "x86_64" ]; then
         PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/x86_64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-amd64/bin"
@@ -758,8 +756,7 @@ if [ "$os" = "Linux" ]; then
 
     echo "Detected Linux on $arch."
 
-elif [[ "$os" == "Darwin" ]]; then
-    real_portable_folder="$(dirname "$(stat -f "$0")")"
+elif [ "$os" == "Darwin" ]; then
     PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/macos:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_macos/bin"
     echo "Detected Mac OS on $arch."
 else
@@ -986,7 +983,6 @@ iphone_se_firmware_select() {
 
 # Begin actual execution. 
 
-# Symlink safe cd into script dir.
 if [ "$os" = "Linux" ]; then
 
     # On Linux we need root.
@@ -995,16 +991,10 @@ if [ "$os" = "Linux" ]; then
         exit 1
     fi
 
-    cd "$(dirname "$(readlink -f "$0")")"
-
 elif [ "$os" = "Darwin" ]; then
-# No readlink in base Mac OS BSD Subsystem.
-    cd "$(dirname "$(stat -f "$0")")"
     # All these executables are signed so that is the only think preventing gatekeeper from allowing the script to be automatic is the quarintine attributes.
-    # Remove any quarintine attribute on $turdus_merula
-    xattr -rc $turdus_merula/bin
-    # Remove any quarintine attribute on Legacy-iOS-Kit.
-    xattr -rc $legacy_ios_kit_tools
+    # Remove any quarintine attributes in this folder.
+    xattr -rc .
 else
     echo "Error: unsupported operating system!"
     exit 1
@@ -1057,10 +1047,10 @@ fi
 # Create ipsw directory if it does not exist.
 mkdir -p data/ipsw
 
-if [[ ! -f "bin/Legacy-iOS-Kit/resources/firstrun" ]]; then
+if [ ! -f "bin/Legacy-iOS-Kit/resources/firstrun" ]; then
     echo "Installing dependencies..."
 
-    (cd bin/Legacy-iOS-Kit && sudo ./restore.sh --no-version-check --no-internet-check)
+    (cd bin/Legacy-iOS-Kit && ./restore.sh --no-version-check --no-internet-check)
     # This is to account for LibUSB being just installed.
 
     echo -e "Please do the following to ensure A999 Activator can talk to your iPhone:\n\n* Disconnect your USB-A Lightning cable from your mac.\n* Connect the USB-A Lightning cable to the Mac wih your iPhone connected.\n"
