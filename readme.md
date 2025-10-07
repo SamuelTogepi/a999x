@@ -33,7 +33,7 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 
 * [a999activator-v1.0.5.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.5/a999-activator-v1.0.5.zip) _For Mac OS and for Linux_
 
-A999 Activator is designed to work on Debian, Fedora, and Mac OS 10.12. x86_64 and ARM64 arches are supported.
+A999 Activator is designed to work on Debian, Fedora, and Mac OS 10.12 or newer. x86_64 and ARM64 arches are supported.
 
 Changes:
 
@@ -62,17 +62,27 @@ If you have an iPhone 6S or iPhone 6S plus, is it is recommended to downgrade to
 
 On iOS 9.3, 9.3.1, 9.3.2, and 9.3.3 all of the above also works, except iMessage and FaceTime sign-in. This is a known issue due to Apple making changes for iOS 9.3 and above that currently does not have a fix yet.
 
-## Usage
+## Requirements
 
-Requirements: You need Mac OS 10.12 or newer, and you need either the [MacPorts](https://www.macports.org/install.php) or [Homebrew](https://brew.sh/) package manager installed.
+Mac requirements:
+
+* Mac OS 10.12 or newer.
+
+* Either the [MacPorts](https://www.macports.org/install.php) or [Homebrew](https://brew.sh/) package manager installed.
+
+Linux requirements:
+
+* Fedora or Debian Linux (x86_64 or arm64).
+
+## Usage
 
 1) Download the latest release and extract it.
 
-2) Execute it in Terminal (this is a command line program).
+2) Execute it in Terminal (this is a command line program). Drag the `a999` command into your Terminal window and press enter. Or if you want, cd into the extracted release and:
 
 `./a999`
 
-On Linux you must run `a999` with root privilages, i.e. `sudo ./a999`. On Mac you do not need to do this. You can also just drag the `a999` command into the Terminal window and execute it.
+Note that on Linux you must run `a999` with root privilages, i.e. `sudo ./a999`. On Mac you do not need to do this.
 
 3) Follow the prompts.
 
