@@ -1,7 +1,7 @@
 #!/bin/bash
 
-version=1.0.5
-echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2025 Alex Free (3-BSD)\nhttps://github.com/alex-free/a999activator\n"
+version=1.0
+echo -e "A999X Activator (A9X, iOS 9, 9 years later) v$version\n(C) 2025 Samuel Bowers (3-BSD)\
 
 # Global vars.
 os="$(uname)"
@@ -11,8 +11,8 @@ ver=
 serial=
 not_normal=false
 file=
-# Used to check if we need iOS 15 to be restored to get activation files, it doubles as a disable to prevent a recursive infinite loop when calling the restore_ipsw() func as well.
-restore_ios_15=false
+# Used to check if we need iOS 16 to be restored to get activation files, it doubles as a disable to prevent a recursive infinite loop when calling the restore_ipsw() func as well.
+restore_ios_16=false
 
 # OS/arch detection.
 # Add all the self-contained binaries we need to the $PATH used within this script.
@@ -52,13 +52,13 @@ usbmuxd_reset() {
     fi
 }
 
-# Note: this only does so much because it appears that if the iPhone was in DFU Mode and then exited it will auto-boot=true...
+# Note: this only does so much because it appears that if the  was in DFU Mode and then exited it will auto-boot=true...
 enforce_recovery() {
     irecovery -c "setenv auto-boot false"
     irecovery -c "saveenv"
 }
 
-pair_iphone() {
+pair_iPad() {
     while ! idevicepair pair 2>/dev/null; do
         
         if [ "$tried_once" = "true" ]; then
@@ -67,15 +67,15 @@ pair_iphone() {
 
         # Because we break above, never gets here on try 2.
         if [ "$1" = "first_time" ]; then
-            echo "No iPhone detected. It may not be paired to your computer if it is indeed in Normal Mode."
+            echo "No iPad detected. It may not be paired to your computer if it is indeed in Normal Mode."
         fi
 
-        read -p "If your iPhone has a passcode, unlock your iPhone and then tap trust if prompted. If your not being prompted, unplug the USB-A to Lightning cable from your Mac then plug it back in. Then presss enter."
+        read -p "If your iPad has a passcode, unlock your iPad and then tap trust if prompted. If your not being prompted, unplug the USB-A to Lightning cable from your Mac then plug it back in. Then presss enter."
         
         # The first time we call this is on program startup, and we don't even know if a device is connected so we don't want to get into a normal mode check loop if say user connects via Recovery or DFU mode device after we are already here.
         if [ "$1" = "first_time" ]; then
             tried_once=true
-            echo "Checking one more time for iPhone in Normal Mode to see if it has been paired..."
+            echo "Checking one more time for iPad in Normal Mode to see if it has been paired..."
         fi
     done
 
@@ -92,12 +92,12 @@ iproxy_kill() {
 }
 
 did_you_follow_instructions() {
-    pair_iphone
-    read -p "* Activate the iPhone. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should be in the iPhone with an active carrier. 
+    pair_iPad
+    read -p "* Activate the iPad. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should be in the iPad with an active carrier. 
 
 * Sign in to iCloud and complete Setup.app. Get to the home screen. 
 
-* Make sure Find My iPhone has been turned off.
+* Make sure Find My iPad has been turned off.
 
 After all of the above is true press any key to continue..."
     wait_for_activation
@@ -112,20 +112,18 @@ is_activated() {
     fi
 }
 
-restore_ios_15_for_device() {
-    if [ $device == "iphone-6s-plus" ]; then
-        restore_ipsw https://updates.cdn-apple.com/2025FallFCS/fullrestores/082-67213/C471E1B8-CB73-4E02-8A9E-39166CD4FD28/iPhone_5.5_15.8.5_19H394_Restore.ipsw
-    elif [ $device == "iphone-6s" ]; then
-        restore_ipsw https://updates.cdn-apple.com/2025FallFCS/fullrestores/082-67136/AC6F1095-935D-4892-9D11-84BE311843B4/iPhone_4.7_15.8.5_19H394_Restore.ipsw
-    elif [ $device == "iphone-se" ]; then
-        restore_ipsw https://updates.cdn-apple.com/2025FallFCS/fullrestores/082-66999/ECD8F46B-AF4B-454F-B6A4-55FEA09A10F9/iPhone_4.0_64bit_15.8.5_19H394_Restore.ipsw
+restore_ios_16_for_device() {
+    if [ $device == "ipad-pro-12.9" ]; then
+        restore_ipsw https://updates.cdn-apple.com/2025FallFCS/fullrestores/082-66297/26CFD5DD-0DB1-46E1-9B3E-78B3C5B922D1/iPadPro_12.9_16.7.12_20H364_Restore.ipsw
+    elif [ $device == "ipad-pro-9.7" ]; then
+        restore_ipsw https://updates.cdn-apple.com/2025FallFCS/fullrestores/082-66287/D653C09C-9C6D-4B88-AA9A-7FFB449DD9F5/iPadPro_9.7_16.7.12_20H364_Restore.ipsw
     fi
     
     # Clean up.
-    restore_ios_15=false
+    restore_ios_16=false
 
     wait_for_normal_mode
-    echo "iOS 15.8.5 has been restored! It will take some additional time for it to start up into Setup.app, please wait..."
+    echo "iOS 16.7.12 has been restored! It will take some additional time for it to start up into Setup.app, please wait..."
  
     did_you_follow_instructions
 }
@@ -134,10 +132,10 @@ boot_turdusra1n() {
     usbmuxd_reset
     wait_for_recovery
 
-    # Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus. It appears to be an issue with turdus merula because it won't show as much output (never gets to bootx) but still returns 0.
+    # Can not trust return values of turdusra1n because at least my 256GB Pro 12.9 reboots to recovery very occasionally. This has never happened on my 32GB TSMC Pro 12.9". It appears to be an issue with turdus merula because it won't show as much output (never gets to bootx) but still returns 0.
     while irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
         usbmuxd_reset
-        echo "Info: If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPhone."
+        echo "Info: If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPad."
 
         while ! turdusra1n -TP data/$device-$serial/$ver/block/*-pteblock2.bin; do
             usbmuxd_reset
@@ -169,7 +167,7 @@ wait_for_normal_mode() {
     while ! ideviceinfo >/dev/null 2>&1; do
        # Ensure we are paired, fixes issues when booting iOS 9.
         idevicepair pair >/dev/null 2>&1
-        echo "Waiting for iPhone to boot..."
+        echo "Waiting for iPad to boot..."
         sleep 1
     done
 }
@@ -177,7 +175,7 @@ wait_for_normal_mode() {
 wait_for_recovery() {
      while ! irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
         if irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
-            echo "DFU Mode detected. Please press the HOME+POWER buttons until your iPhone reboots into Recovery Mode. Do not stop pressing those buttons until you get to Recovery Mode."
+            echo "DFU Mode detected. Please press the HOME+POWER buttons until your iPad reboots into Recovery Mode. Do not stop pressing those buttons until you get to Recovery Mode."
 
             while irecovery -m 2>/dev/null | grep -q "DFU Mode"; do
                 sleep 1
@@ -185,11 +183,11 @@ wait_for_recovery() {
 
         fi
 
-        echo "Expecting iPhone to be in Recovery Mode shortly, hang in there!"
+        echo "Expecting iPad to be in Recovery Mode shortly, hang in there!"
         sleep 1
     done
     
-    echo "Found iPhone in Recovery Mode!"
+    echo "Found iPad in Recovery Mode!"
 }
 
 turdursra1n_pwn() {
@@ -242,9 +240,9 @@ start_rd() {
 
 wait_for_activation()
 {
-    # This confirms the iPhone is activated. It does not confirm if iCloud was signed in, if Find My iPhone was turned off, or if an active cell service SIM was used during activation.
+    # This confirms the iPad is activated. It does not confirm if iCloud was signed in, if Find My iPad was turned off, or if an active cell service SIM was used during activation.
     while ! is_activated; do
-        read -p "iPhone is not activated! Please make sure all of the above criteria are true as well and then press enter."
+        read -p "iPad is not activated! Please make sure all of the above criteria are true as well and then press enter."
         sleep 1
     done
 }
@@ -264,22 +262,22 @@ got_all_activation_files() {
 get_activation() {
     # Need to get activation files.
     echo -e "Existing activation files not backed up yet.\nObtaining activation files..."
-    # Hail Mary if on latest iOS 15 already.
+    # Hail Mary if on latest iOS 16 already.
     ios_version=$(ideviceinfo 2>/dev/null | grep "ProductVersion" | awk '{print $2}')
 
-    # Set $not_normal when first connecting/detecting iPhone if it is in Recovery or DFU Mode.
+    # Set $not_normal when first connecting/detecting iPad if it is in Recovery or DFU Mode.
     if [ "$not_normal" == "true" ]; then
-        echo "Your iPhone is not in normal mode, so iOS version can not be determined. Restoring iPhone to iOS 15.8.5."
+        echo "Your iPad is not in normal mode, so iOS version can not be determined. Restoring iPad to iOS 16.7.12."
         restore_ios_15=true
-    elif [ "$ios_version" != "15.8.5" ]; then
-        echo "Latest iOS version is not installed. Restoring iPhone to iOS 15.8.5."
+    elif [ "$ios_version" != "16.7.12" ]; then
+        echo "Latest iOS version is not installed. Restoring iPad to iOS 16.7.12."
         restore_ios_15=true
-    elif [ "$ios_version" == "15.8.5" ]; then
+    elif [ "$ios_version" == "16.7.12" ]; then
         did_you_follow_instructions
     fi
 
-    if [ "$restore_ios_15" == "true" ]; then
-        restore_ios_15_for_device
+    if [ "$restore_ios_16" == "true" ]; then
+        restore_ios_16_for_device
     fi
 
     # Makes sure we don't stop until we actually get the activation files.
@@ -304,7 +302,7 @@ get_activation() {
         send "mount_filesystems\r"
         expect "#"
         
-        # Ramdisk allows RW of / on unjailbroken iOS 15.8.5. on /private/var we have stable RO. RW sometimes doesn't work, so use / as scratch dir.
+        # Ramdisk allows RW of / on unjailbroken iOS 16.7.12. on /private/var we have stable RO. RW sometimes doesn't work, so use / as scratch dir.
         send "mkdir /mnt1/activate\r"
         expect "#"
         
@@ -408,7 +406,7 @@ EOF
 
 restore_ipsw() {
     # If we are using this to restore to iOS 15, don't get stuck in an infinite loop.
-    if [ "$restore_ios_15" == "false" ]; then
+    if [ "$restore_ios_16" == "false" ]; then
         while ! got_all_activation_files; do
             get_activation
         done
@@ -429,7 +427,7 @@ restore_ipsw() {
         done
     fi
 
-    # Get ver and build number, i.e. 9.2_13D20 for possible iPhone 6S downgrade (even though we can't use 13D20 or any 'new' iOS 9.2.1 for other devices because jbme does not work)... Build number is important for iPhone 6S and iPhone 6S Plus which have 2 different iOS 9.2.1 versions available for restore.
+    # Get ver and build number, i.e. 9.2_13D20 for possible iPad Pro downgrade (even though we can't use 13D20 or any 'new' iOS 9.2.1 for other devices because jbme does not work)... Build number is important for iPad Pro and iPad Pro 12.9" which have 2 different iOS 9.2.1 versions available for restore.
     ver=$(echo "$file" | sed -E 's/.*_([0-9]+\.[0-9]+(\.[0-9]+)?)_([0-9A-Z]+)_Restore\.ipsw/\1_\3/')
 
     echo "Restoring iOS $ver with $file.."
@@ -477,12 +475,12 @@ restore_ipsw() {
 downgrade() {
     # We need to do this to prevent an issue where the device can crash randomly and enter DFU mode on the final restored firmware lower then 10.2.1. This also fixes a weird issue when you restore 9.3.x after being on 9.3.x, it can sometimes grey out the Wi-Fi. This was originally 10.2.1, but due to an issue with restoring/booting the ramdisk this now is 10.2.1 (which is HFS+) https://www.reddit.com/r/LegacyJailbreak/comments/1nj598d/issue_downgrading_a9_devices_to_ios_9x_using/.
     # When we end the activation get ramdisk we ALWAYS will be in Recovery Mode.
-    if [ $device == "iphone-6s-plus" ]; then
-        restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96800-20170112-6151CD56-D81D-11E6-A447-F501D55B5B9D/iPhone_5.5_10.2.1_14D27_Restore.ipsw
-    elif [ $device == "iphone-6s" ]; then
-        restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96803-20170112-6151BFBE-D81D-11E6-8553-F701D55B5B9D/iPhone_4.7_10.2.1_14D27_Restore.ipsw
-    elif [ $device == "iphone-se" ]; then
-        restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96769-20170112-61558B4E-D81D-11E6-9610-F301D55B5B9D/iPhoneSE_10.2.1_14D27_Restore.ipsw
+    if [ $device == "iPad-Pro-12.9"" ]; then
+        restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96800-20170112-6151CD56-D81D-11E6-A447-F501D55B5B9D/iPad_5.5_10.2.1_14D27_Restore.ipsw
+    elif [ $device == "iPad-Pro" ]; then
+        restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96803-20170112-6151BFBE-D81D-11E6-8553-F701D55B5B9D/iPad_4.7_10.2.1_14D27_Restore.ipsw
+    elif [ $device == "iPad-se" ]; then
+        restore_ipsw http://appldnld.apple.com/ios10.2.1/031-96769-20170112-61558B4E-D81D-11E6-9610-F301D55B5B9D/iPadSE_10.2.1_14D27_Restore.ipsw
     fi
 
     restore_ipsw $1
@@ -590,7 +588,7 @@ downgrade() {
     }
     expect eof
 
-    # Transfer plutil (from com.bingner.plutil_0.2.1_iphoneos-arm.deb) to host.
+    # Transfer plutil (from com.bingner.plutil_0.2.1_iPados-arm.deb) to host.
     spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 payload/plutil root@127.0.0.1:/mnt1/usr/bin/plutil
     expect {
         "continue connecting" {
@@ -712,8 +710,8 @@ EOF
 
     iproxy_kill
     boot_turdusra1n
-    pair_iphone
-    echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPhone will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 30 seconds so that the LAST STEP can be completed!"
+    pair_iPad
+    echo "Your iPad is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPad will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 30 seconds so that the LAST STEP can be completed!"
     sleep 30
     boot_turdusra1n
 
@@ -722,11 +720,11 @@ EOF
         exit 1
     fi
 
-    if [ $device == "iphone-6s-plus" ]; then
-        boot_script=boot6sp-$ver-$serial
-    elif [ $device == "iphone-6s" ]; then      
-        boot_script=boot6s-$ver-$serial
-    elif [ $device == "iphone-se" ]; then
+    if [ $device == "iPad-Pro-12.9"" ]; then
+        boot_script=bootProp-$ver-$serial
+    elif [ $device == "iPad-Pro" ]; then      
+        boot_script=bootPro-$ver-$serial
+    elif [ $device == "iPad-se" ]; then
         boot_script=bootse-$ver-$serial
     fi
 
@@ -779,7 +777,7 @@ usbmuxd_reset() {
 if [ "$os" = "Linux" ]; then
 
     if [ "$EUID" -ne 0 ]; then
-        echo "Error: root privileges are required to boot your iPhone. Please execute $0 with sudo or as root to continue." >&2
+        echo "Error: root privileges are required to boot your iPad. Please execute $0 with sudo or as root to continue." >&2
         exit 1
     fi
 
@@ -795,10 +793,10 @@ cleanup()
 }
 trap cleanup EXIT
 
-# Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus.
+# Can not trust return values of turdusra1n because at least my 256GB TSMC Pro 12.9" reboots to recovery very occasionally. This has never happened on my 32GB TSMC Pro 12.9".
 while irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
     usbmuxd_reset
-    echo "If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPhone."
+    echo "If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPad."
 
     while ! turdusra1n -TP data/'$device'-'$serial'/'$ver'/block/*-pteblock2.bin; do 
         usbmuxd_reset
@@ -824,14 +822,14 @@ echo "Enable the jailbreak with http://jbme.ddw.nu in Safari!"
             ;;
         9.3*)
             echo "IMPORTANT INFORMATION FOR iOS 9.3, iOS 9.3.1, iOS 9.3.2, AND iOS 9.3.3 USERS (WHICH YOU ARE): iMessage and FaceTime do not work yet!"
-            if [ $device != "iphone-se" ]; then
+            if [ $device != "iPad-se" ]; then
                 echo "If you need iMessage and or FaceTime downgrade to iOS 9.2 or iOS 9.2.1 instead."
             fi
             ;;
     esac
 }
 
-iphone_6s_firmware_select() {
+iPad_Pro_firmware_select() {
     PS3="Select iOS version to downgrade to: "
     options=(
         "9.2 (13C75) (12/8/2015)"
@@ -848,31 +846,31 @@ iphone_6s_firmware_select() {
     do
         case $opt in
             "9.2 (13C75) (12/8/2015)")
-                downgrade "http://appldnld.apple.com/ios9.2/031-29220-20151203-557E81AA-8D8B-11E5-BEE6-AD638B8BECEB/iPhone8,1_9.2_13C75_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2/031-29140-20151203-674A1328-8D8A-11E5-BD43-55618B8BECEB/iPad6,7_9.2_13C75_Restore.ipsw"
                 break;
                 ;;
             "9.2.1 (13D15) (1/19/2016)")
-                downgrade "http://appldnld.apple.com/ios9.2.1/031-47635-20160119-97350056-B969-11E5-A65F-634D8FD31F8F/iPhone8,1_9.2.1_13D15_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2.1/031-47563-20160119-8C3DDEA8-B968-11E5-918A-CB4A8FD31F8F/iPad6,7_9.2.1_13D15_Restore.ipsw"
                 break;
                 ;;
             #"9.2.1 (13D20) (2/18/2016)") Can't use because jbme doesn't support it
-                #downgrade "http://appldnld.apple.com/ios9.2.1/031-49377-20160217-4BB1908C-D44D-11E5-9900-0952919DCAD8/iPhone8,1_9.2.1_13D20_Restore.ipsw"
+                #downgrade "http://appldnld.apple.com/ios9.2.1/031-48671-20160217-4BB46F46-D44D-11E5-8BAB-0052919DCAD8/iPad6,7_9.2.1_13D20_Restore.ipsw"
                 #break;
                 #;;
             "9.3 (13E234) (3/21/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3/031-20814-20160321-50FF38D4-EAA8-11E5-AAA8-C479BD379832/iPhone8,1_9.3_13E234_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3/031-28362-20160321-5101CF90-EAA8-11E5-951B-CC79BD379832/iPad6,7_9.3_13E233_Restore.ipsw"
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3.1/031-55114-20160331-09A05894-F5E6-11E5-861F-21CB2D794EB1/iPhone8,1_9.3.1_13E238_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.1/031-54964-20160331-099887E0-F5E6-11E5-8F56-1FCB2D794EB1/iPad6,7_9.3.1_13E238_Restore.ipsw"
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                downgrade "http://appldnld.apple.com/ios9.3.2/031-62431-20160516-5E51F038-13A9-11E6-ACFA-61D9400DF7EB/iPhone8,1_9.3.2_13F69_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-62618-20160516-D6E79C64-13A9-11E6-9BD6-45DA400DF7EB/iPad6,7_9.3.2_13F69_Restore.ipsw"
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60536-20160718-06EE469E-4378-11E6-8185-A7F759E0E9B6/iPhone8,1_9.3.3_13G34_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60723-20160718-55B463EE-4378-11E6-9EA0-C4FB59E0E9B6/iPad6,7_9.3.3_13G34_Restore.ipsw"
                 break;
                 ;;
             "Exit")
@@ -886,7 +884,7 @@ iphone_6s_firmware_select() {
 }
 
 
-iphone_6s_plus_firmware_select() {
+iPad_Pro_12.9"_firmware_select() {
 
     PS3="Select iOS version to downgrade to: "
     options=(
@@ -904,31 +902,31 @@ iphone_6s_plus_firmware_select() {
     do
         case $opt in
             "9.2 (13C75) (12/8/2015)")
-                downgrade "http://appldnld.apple.com/ios9.2/031-29142-20151203-53B314A8-8D8B-11E5-B7FA-9A638B8BECEB/iPhone8,2_9.2_13C75_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2/031-29216-20151203-674A518A-8D8A-11E5-97B3-57618B8BECEB/iPad6,8_9.2_13C75_Restore.ipsw"
                 break;
                 ;;
             "9.2.1 (13D15) (1/19/2016)")
-                downgrade "http://appldnld.apple.com/ios9.2.1/031-47609-20160119-798F784C-B969-11E5-8729-F24C8FD31F8F/iPhone8,2_9.2.1_13D15_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.2.1/031-47548-20160119-8C3DB6D0-B968-11E5-AD30-CD4A8FD31F8F/iPad6,8_9.2.1_13D15_Restore.ipsw"
                 break;
                 ;;
             #"9.2.1 (13D20) (2/18/2016)") can't use because jbme doesn't support it
-                #downgrade "http://appldnld.apple.com/ios9.2.1/031-49073-20160217-4BB05046-D44D-11E5-9D30-0852919DCAD8/iPhone8,2_9.2.1_13D20_Restore.ipsw"
+                #downgrade "http://appldnld.apple.com/ios9.2.1/031-49308-20160217-4BADBB56-D44D-11E5-B486-0152919DCAD8/iPad6,8_9.2.1_13D20_Restore.ipsw"
                 #break;
                 #;;
             "9.3 (13E234) (3/21/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3/031-28376-20160321-51006FEC-EAA8-11E5-AEC6-D279BD379832/iPhone8,2_9.3_13E234_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3/031-28427-20160321-BC5C2406-EAA9-11E5-976F-EB7DBD379832/iPad6,8_9.3_13E233_Restore.ipsw"
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3.1/031-54811-20160331-099896CC-F5E6-11E5-88BA-1ACB2D794EB1/iPhone8,2_9.3.1_13E238_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.1/031-55357-20160331-09B68CEA-F5E6-11E5-B924-2BCB2D794EB1/iPad6,8_9.3.1_13E238_Restore.ipsw"
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                downgrade "http://appldnld.apple.com/ios9.3.2/031-62657-20160516-02ECC2F8-13AA-11E6-AFB3-D9DA400DF7EB/iPhone8,2_9.3.2_13F69_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-62062-20160516-6A1A9458-13A7-11E6-8779-B8D6400DF7EB/iPad6,8_9.3.2_13F69_Restore.ipsw"
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60985-20160718-5C7A1B06-4378-11E6-8743-CEFC59E0E9B6/iPhone8,2_9.3.3_13G34_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60339-20160718-06EB8404-4378-11E6-A195-9DF759E0E9B6/iPad6,8_9.3.3_13G34_Restore.ipsw"
                 break;
                 ;;
             "Exit")
@@ -941,7 +939,7 @@ iphone_6s_plus_firmware_select() {
     done
 }
 
-iphone_se_firmware_select() {
+iPad_se_firmware_select() {
 
     PS3="Select iOS version to downgrade to: "
     options=(
@@ -956,19 +954,23 @@ iphone_se_firmware_select() {
     do
         case $opt in
             "9.3 (13E233) (3/21/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3/031-20815-20160321-5102B932-EAA8-11E5-A488-C779BD379832/iPhone8,4_9.3_13E233_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3/031-20813-20160321-50FF2B1E-EAA8-11E5-A40C-C179BD379832/iPad6,3_9.3_13E234_Restore.ipsw"
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3.1/031-55507-20160331-09A917D6-F5E6-11E5-BFDA-32CB2D794EB1/iPhone8,4_9.3.1_13E238_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.1/031-54866-20160331-09994CCA-F5E6-11E5-8354-1DCB2D794EB1/iPad6,3_9.3.1_13E238_Restore.ipsw"
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                downgrade "http://appldnld.apple.com/ios9.3.2/031-61688-20160516-6A0F5782-13A7-11E6-93C9-A4D6400DF7EB/iPhone8,4_9.3.2_13F69_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-62643-20160516-F67BDAE0-13A9-11E6-A5A3-AEDA400DF7EB/iPad6,3_9.3.2_13F69_Restore.ipsw"
+                break;
+                ;;
+            "9.3.2 (13F72) (6/2/2016)")
+                downgrade "http://appldnld.apple.com/ios9.3.2/031-63513-20160531-52E11156-2665-11E6-8860-F0F5662719FC/iPad6,3_9.3.2_13F72_Restore.ipsw"
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60143-20160718-06E90A30-4378-11E6-81DC-8EF759E0E9B6/iPhone8,4_9.3.3_13G34_Restore.ipsw"
+                downgrade "http://appldnld.apple.com/iOS9.3.3/031-60435-20160718-06EB0394-4378-11E6-AB0E-9FF759E0E9B6/iPad6,3_9.3.3_13G34_Restore.ipsw"
                 break;
                 ;;
             "Exit")
@@ -1053,7 +1055,7 @@ if [ ! -f "bin/Legacy-iOS-Kit/resources/firstrun" ]; then
     (cd bin/Legacy-iOS-Kit && ./restore.sh --no-version-check --no-internet-check)
     # This is to account for LibUSB being just installed.
 
-    echo -e "Please do the following to ensure A999 Activator can talk to your iPhone:\n\n* Disconnect your USB-A Lightning cable from your mac.\n* Connect the USB-A Lightning cable to the Mac wih your iPhone connected.\n"
+    echo -e "Please do the following to ensure A999 Activator can talk to your iPad:\n\n* Disconnect your USB-A Lightning cable from your mac.\n* Connect the USB-A Lightning cable to the Mac wih your iPad connected.\n"
 
     read -p "After doing the above, press any key to continue..."
 fi
@@ -1061,36 +1063,33 @@ fi
 # Fresh USB connection.
 usbmuxd_reset
 
-echo "Searching for an iPhone 6S, iPhone 6S Plus, or iPhone SE connected to this computer with a USB-A Lightning cable. Please wait..."
+echo "Searching for an iPad Pro 9.7", iPad Pro 12.9" connected to this computer with a USB-A Lightning cable. Please wait..."
 
 # Need the serial number to identify what cached data to use. This is available in Recovery Mode and Normal mode, but not in DFU Mode so we don't allow this to run until we get into Recovery Mode if DFU Mode is detected.
-echo "Checking for iPhone in DFU Mode..."
+echo "Checking for iPad in DFU Mode..."
 
 if irecovery -m 2>/dev/null | grep -q "DFU Mode"; then
     wait_for_recovery
 fi
 
-# Loop until the iPhone can be detected in Recovery Mode or Normal Mode. It sure as hell aint in DFU Mode at this point...
+# Loop until the iPad can be detected in Recovery Mode or Normal Mode. It sure as hell aint in DFU Mode at this point...
 while true; do
 
-    echo "Checking for iPhone in Recovery Mode..."
+    echo "Checking for iPad in Recovery Mode..."
 
     if irecovery -m 2>/dev/null | grep -q "Recovery Mode"; then
-        echo "Info: iPhone was found in Recovery Mode."
+        echo "Info: iPad was found in Recovery Mode."
         not_normal=true
         serial=$(irecovery -q 2>/dev/null | grep -i 'SRNM:' | awk '{print $2}')
 
-        if irecovery -q 2>/dev/null |  grep '^PRODUCT: iPhone8,2'; then
-            echo "iPhone 6S Plus detected!"
-            device=iphone-6s-plus
-        elif irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPhone8,1'; then
-            echo "iPhone 6S detected!"
-            device=iphone-6s
-        elif irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPhone8,4'; then
-            echo "iPhone SE detected!"
-            device=iphone-se 
+        if irecovery -q 2>/dev/null |  grep '^PRODUCT: iPad8,2'; then
+            echo "iPad Pro 12.9" detected!"
+            device=iPad-Pro-12.9"
+        elif irecovery -q 2>/dev/null | grep -q '^PRODUCT: iPad8,1'; then
+            echo "iPad Pro 9.7" detected!"
+            device=iPad-Pro-9.7"
         else
-            echo "Error: Currently only iPhone 6S, iPhone 6S Plus, and iPhone SE are supported! If you have a supported device, make sure it is connected with a Lightning to USB-A cable to this computer"
+            echo "Error: Currently only iPad Pro 9.7", iPad Pro 12.9" are supported! If you have a supported device, make sure it is connected with a Lightning to USB-A cable to this computer"
             exit 1
         fi
 
@@ -1106,23 +1105,23 @@ while true; do
         fi
 
     else
-        # Gets here if no iPhone is connected as well so set special arg.
-        echo "Checking for iPhone in Normal Mode..."
-        pair_iphone first_time
+        # Gets here if no iPad is connected as well so set special arg.
+        echo "Checking for iPad in Normal Mode..."
+        pair_iPad first_time
     
         serial=$(ideviceinfo 2>/dev/null | grep -i '^SerialNumber:' | awk '{print $2}')
         
-        if ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,2' > /dev/null 2>&1; then
-            echo "iPhone 6S Plus detected!"
-            device=iphone-6s-plus
-        elif ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,1' > /dev/null 2>&1; then
-            echo "iPhone 6S detected!"
-            device=iphone-6s
-        elif ideviceinfo 2>/dev/null | grep -q '^ProductType: iPhone8,4' > /dev/null 2>&1; then
-            echo "iPhone SE detected!"
-            device=iphone-se
+        if ideviceinfo 2>/dev/null | grep -q '^ProductType: iPad6,7' > /dev/null 2>&1; then
+            echo "iPad Pro 12.9" (WiFi) detected!"
+            device=iPad-Pro-12.9-wifi
+        elif ideviceinfo 2>/dev/null | grep -q '^ProductType: iPad6,8' > /dev/null 2>&1; then
+            echo "iPad Pro 12.9" (Cellular)!"
+            device=iPad-Pro
+        elif ideviceinfo 2>/dev/null | grep -q '^ProductType: iPad8,4' > /dev/null 2>&1; then
+            echo "iPad SE detected!"
+            device=iPad-se
         else
-            echo "Error: currently only iPhone 6S, iPhone 6S Plus, and iPhone SE are supported! If you have a supported iPhone, make sure it is connected with a Lightning to USB-A cable to this computer and try again."
+            echo "Error: currently only iPad Pro 9.7", iPad Pro 12.9" are supported! If you have a supported iPad, make sure it is connected with a Lightning to USB-A cable to this computer and try again."
             exit 1
         fi
 
@@ -1141,10 +1140,8 @@ done
 
 echo "Serial Number Identifier: $serial"
 
-if [ $device == "iphone-6s-plus" ]; then
-    iphone_6s_plus_firmware_select
-elif [ $device == "iphone-6s" ]; then
-    iphone_6s_firmware_select
-elif [ $device == "iphone-se" ]; then
-    iphone_se_firmware_select
+if [ $device == "iPad-Pro-12.9" ]; then
+    iPad_Pro_12.9_firmware_select
+elif [ $device == "iPad-Pro-9.7" ]; then
+    iPad_Pro_9.7_firmware_select
 fi
