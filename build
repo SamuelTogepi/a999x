@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # EzRe build script for A999Activator.
-version="1.0.5"
+version="1.0.6"
 program=a999
 release_name=a999-activator-v$version
 set -e
@@ -60,4 +60,3 @@ fi
 
 chmod -R 777 $release_name
 zip -r $release_name.zip $release_name
-

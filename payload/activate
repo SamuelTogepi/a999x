@@ -8,6 +8,7 @@ going_down() {
     uicache
     # Sync filesystem writes
     sync
+    sleep 5
     reboot
 }
 
@@ -98,7 +99,7 @@ fi
 # Keep files for test run once we have OpenSSH if debug=true.
 
 # This is being executed by the launch daemon.
-if [ $debug = false ]; then
+if [ "$debug" = "false" ]; then
     rm /usr/bin/plutil
     rm /usr/bin/chflags
     rm /usr/bin/activate
@@ -107,7 +108,7 @@ if [ $debug = false ]; then
     rm -r /activate
     going_down
 # First run of debug=true. Just delete the launch daemon and allow for testing of script later via OpenSSH on device.
-elif [ $debug = true ] && [ -f "/Library/LaunchDaemons/com.alex.activate.plist" ]; then
+elif [ "$debug" = "true" ] && [ -f "/Library/LaunchDaemons/com.alex.activate.plist" ]; then
     rm /Library/LaunchDaemons/com.alex.activate.plist
     going_down
 else
