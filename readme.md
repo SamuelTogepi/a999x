@@ -29,23 +29,21 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 
 ## Downloads
 
-### Version 1.0.5 (10/5/2025)
+### Version 1.0.6 (10/10/2025)
 
-* [a999activator-v1.0.5.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.5/a999-activator-v1.0.5.zip) _For Mac OS and for Linux_
+* [a999activator-v1.0.5.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.6/a999-activator-v1.0.6.zip) _For Mac OS and for Linux_
 
 A999 Activator is designed to work on Debian, Fedora, and Mac OS 10.12 or newer. x86_64 and ARM64 arches are supported.
 
 Changes:
 
-* Linux support for x86_64 and arm64.
+* Improved Linux support, closing [issue 8](https://github.com/alex-free/a999activator/issues/8).
 
-* Improved `get_activation()` function with better error detection.
+* Big rewrite for Turdus Merula v1.1.1. Also takes less steps!
 
-* Uses installed tools on your computer first before falling back to internal ones.
+* Improved activation file application by launch daemon, now waits 5 seconds to ensure it has wrote all changes before rebooting. This solves an issue where sometimes the launch daemon didn't delete itself correctly causing your iPhone to go into Recovery Mode after jailbreaking it after it had already been activated and in normal use.
 
-* Changed how dependencies are installed on first run.
-
-* Removed untethered downgrade (no one tested it and I don't have blobs so I can't maintain it).
+* Generates a `log.txt` file each run.
 
 [Previous versions](changelog.md).
 
@@ -97,6 +95,10 @@ Note that on Linux you must run `a999` with root privilages, i.e. `sudo ./a999`.
 * You can use it as your main iPhone (I did for a few weeks). T-Mobile/Mint Mobile in the USA are confirmed working carriers.
 
 ## FAQ
+
+### My iPhone Won't Detect On Fedora Linux
+
+This may happen the first time you ever use A999 Activator on Fedora Linux. Reboot your computer, and try a999 activator again. 
 
 ### The Jailbreak Website Shows An Error In Safari And Reloads After Hitting Go
 

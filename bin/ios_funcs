@@ -114,7 +114,7 @@ usbmuxd_reset() {
         systemctl stop usbmuxd > /dev/null 2>&1
         # If usbmuxd is still running kill it forcibly.
         killall -9 usbmuxd > /dev/null 2>&1
-        usbmuxd -f -p &
+        usbmuxd -f -p & > /dev/null 2>&1
     fi
 }
 

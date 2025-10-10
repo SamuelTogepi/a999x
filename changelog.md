@@ -1,5 +1,23 @@
 # [A999 Activator: A9, iOS 9, 9 Years Later](readme.md) -> Changelog
 
+## Version 1.0.5 (10/5/2025)
+
+* [a999activator-v1.0.5.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.5/a999-activator-v1.0.5.zip) _For Mac OS and for Linux_
+
+A999 Activator is designed to work on Debian, Fedora, and Mac OS 10.12 or newer. x86_64 and ARM64 arches are supported.
+
+Changes:
+
+* Linux support for x86_64 and arm64.
+
+* Improved `get_activation()` function with better error detection.
+
+* Uses installed tools on your computer first before falling back to internal ones.
+
+* Changed how dependencies are installed on first run.
+
+* Removed untethered downgrade (no one tested it and I don't have blobs so I can't maintain it).
+
 ## Version 1.0.4 (10/3/2025)
 
 * [a999activator-v1.0.4-mac-os-universal.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.4/a999-activator-v1.0.4-mac-os-universal.zip) _For Mac OS 10.12 and newer_

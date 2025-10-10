@@ -796,7 +796,8 @@ if [ "$os" = "Linux" ]; then
     if command -v dnf >/dev/null; then
         # Crypto libraries for lockdown.
         update-crypto-policies --set LEGACY > /dev/null 2>&1
-        echo "Info, if you have a999 activator can not connect to your iPhone try rebooting your computer."
+        # Crypto policies usually require a reboot to take effect.
+        echo "Info: On the first run a999 activator can not connect to your iPhone, try rebooting your computer."
         # Set SE linux to permissive (resets on Reboot)
         setenforce 0
         # Deps.
