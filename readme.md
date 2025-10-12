@@ -29,21 +29,15 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 
 ## Downloads
 
-### Version 1.0.6 (10/10/2025)
+### Version 1.0.7 (10/12/2025)
 
-* [a999activator-v1.0.5.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.6/a999-activator-v1.0.6.zip) _For Mac OS and for Linux_
+* [a999activator-v1.0.7.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.7/a999-activator-v1.0.7.zip) _For Mac OS and for Linux_
 
 A999 Activator is designed to work on Debian, Fedora, and Mac OS 10.12 or newer. x86_64 and ARM64 arches are supported.
 
 Changes:
 
-* Improved Linux support, closing [issue 8](https://github.com/alex-free/a999activator/issues/8).
-
-* Big rewrite for Turdus Merula v1.1.1. Also takes less steps!
-
-* Improved activation file application by launch daemon, now waits 5 seconds to ensure it has wrote all changes before rebooting. This solves an issue where sometimes the launch daemon didn't delete itself correctly causing your iPhone to go into Recovery Mode after jailbreaking it after it had already been activated and in normal use.
-
-* Generates a `log.txt` file each run.
+* Now uses my own [idevice-tool-kit](https://github.com/alex-free/idevice-tool-kit) function library.
 
 [Previous versions](changelog.md).
 
@@ -110,7 +104,7 @@ Disconnect and reconnect the lightning cable to get past it.
 
 ### Error Failed To Open Handle (No Device) After Checkmate?
 
-This error occurs on Linux when booting iOS 9. Disconnect and reconnect the lightning cable to get past it.
+This error occurs on Linux when booting iOS 9. Disconnect and reconnect the lightning cable to get past it. The error will appear again but be non-fatal and work.
 
 ### Unable To Successfully Restore Device
 

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # EzRe build script for A999Activator.
-version="1.0.6"
+version="1.0.7"
 program=a999
 release_name=a999-activator-v$version
 set -e
 
 cd "$(dirname "$0")"
 
-rm -rf $release_name $release_name.zip
+sudo rm -rf $release_name $release_name.zip
 
 if [ "$1" == "clean" ]; then
     exit 0

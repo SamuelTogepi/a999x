@@ -6,50 +6,11 @@ cd "$real_portable_folder"
 # Log file.
 exec > >(tee log.txt) 2>&1
 # Load common functions.
-source bin/ios_funcs
+source bin/idevice-tool-kit/idevice-tool-kit
 
 echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2025 Alex Free (3-BSD)\nhttps://github.com/alex-free/a999activator\n"
 
-# Global vars.
-os="$(uname)"
-arch="$(uname -m)"
-device=
-# If false A10.
-a9=false
-ver=
-serial=
-not_normal=false
-ipsw_file=
-# Used to check if we need iOS 15 to be restored to get activation files, it doubles as a disable to prevent a recursive infinite loop when calling the restore_ipsw() func as well.
-restore_signed_ios=false
-# Need to do more steps for final restore.
-not_final_restore=true
-
-# OS/arch detection.
-# Add all the self-contained binaries we need to the $PATH used within this script.
-
-if [ "$os" = "Linux" ]; then
-
-    if [ "$arch" = "x86_64" ]; then
-        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/x86_64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-amd64/bin"
-    elif [ "$arch" = "arm64" ]; then
-        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/arm64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-arm64/bin"
-    else
-        echo "Error: Linux on $arch is not supported."
-        exit 1
-    fi
-
-    echo "Detected Linux on $arch."
-
-elif [[ "$os" == "Darwin" ]]; then
-    PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/macos:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_macos/bin"
-    echo "Detected Mac OS on $arch."
-else
-    echo "Error: $os is not supported."
-    exit 1
-fi
-
-echo "PATH: $PATH"
+set_path
 
 iproxy_start() {
     iproxy 6414 22 > /dev/null 2>&1 &
@@ -520,102 +481,8 @@ EOF
     sleep 45
 
     boot_turdusra1n
-
-    if [ $device == "iphone-6s-plus" ]; then
-        boot_script=boot6sp-$ver-$serial
-    elif [ $device == "iphone-6s" ]; then      
-        boot_script=boot6s-$ver-$serial
-    elif [ $device == "iphone-se" ]; then
-        boot_script=bootse-$ver-$serial
-    fi
-
-    # Delete any existing boot* scripts for this serial number.
-    rm -f *-$serial
-    
-    # Generate boot* script
-    echo -e '#!/bin/bash
-
-os="$(uname)"
-arch="$(uname -m)"
-
-# OS/arch detection.
-# Add all the self-contained binaries we need to the $PATH used within this script.
-real_portable_folder="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-if [ "$os" = "Linux" ]; then
-    
-    if [ "$arch" = "x86_64" ]; then
-        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/x86_64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-amd64/bin"
-    elif [ "$arch" = "arm64" ]; then
-        PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/linux/arm64:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_linux-arm64/bin"
-    else
-        echo "Error: Linux on $arch is not supported."
-        exit 1
-    fi
-
-    echo "Detected Linux on $arch."
-
-elif [ "$os" == "Darwin" ]; then
-    PATH="${PATH:+$PATH:}$real_portable_folder/bin/Legacy-iOS-Kit/bin/macos:$real_portable_folder/bin/turdus_m3rula_1.1_b0ea3ee7_macos/bin"
-    echo "Detected Mac OS on $arch."
-else
-    echo "Error: $os is not supported."
-    exit 1
-fi
-
-echo "PATH: $PATH"
-cd "$real_portable_folder"
-
-usbmuxd_reset() {
-    if [ "$os" = "Linux" ]; then
-        systemctl stop usbmuxd > /dev/null 2>&1
-        # If usbmuxd is still running kill it forcibly.
-        killall -9 usbmuxd > /dev/null 2>&1
-        usbmuxd -f -p > /dev/null 2>&1 &
-    fi
-}
-
-if [ "$os" = "Linux" ]; then
-
-    if [ "$EUID" -ne 0 ]; then
-        echo "Error: root privileges are required to boot your iPhone. Please execute $0 with sudo or as root to continue." >&2
-        exit 1
-    fi
-
-    usbmuxd_reset
-fi
-
-# When this script exits, automatically restart usbmuxd as normal. We are root at this point that this takes effect (on Linux).
-cleanup() 
-{
-    if [ "$os" = "Linux" ]; then 
-        usbmuxd_reset
-    fi
-}
-trap cleanup EXIT
-
-# Can not trust return values of turdusra1n because at least my 128GB TSMC 6S Plus reboots to recovery very occasionally. This has never happened on my 32GB TSMC 6S Plus.
-while irecovery -m 2>/dev/null | grep -q "Recovery Mode"; do
-    usbmuxd_reset
-    echo "If you get an error about failed to open handle (no device) after Checkmate?, disconnect then reconnect your iPhone."
-
-    while ! turdusra1n -TP data/'$device'-'$serial'/'$ver'/block/*-pteblock2.bin; do 
-        usbmuxd_reset
-        echo "Something went wrong, lets try that again..."
-    done
-
-    echo "Please wait, checking for proper booting in 20 seconds"
-    sleep 20
-done
-
-echo "Enable the jailbreak with http://jbme.ddw.nu in Safari!"
-
-' > $boot_script
-
-    chmod 755 $boot_script
-    # Clips the last character otherwise in the echo below.
-    boot_script=$(echo "$boot_script" | tr -d '\r')
-    echo "Activation was restored! You need to enable the jailbreak with http://jbme.ddw.nu in Safari everytime you boot, but your done! If your phone is powered off or rebooted, it will first boot to Recovery Mode. You'll need to run the $boot_script command (now found in the same folder as the a999 command) to boot it into normal mode."
+    generate_boot_script
+    echo "Activation was restored! You need to enable the jailbreak with http://jbme.ddw.nu in Safari everytime you boot, but your done!"
 
     case "$ver" in
         9.2*)
@@ -623,7 +490,7 @@ echo "Enable the jailbreak with http://jbme.ddw.nu in Safari!"
             ;;
         9.3*)
             echo "IMPORTANT INFORMATION FOR iOS 9.3, iOS 9.3.1, iOS 9.3.2, AND iOS 9.3.3 USERS (WHICH YOU ARE): iMessage and FaceTime do not work yet!"
-            if [ $device != "iphone-se" ]; then
+            if [ $device != "iphone_se" ]; then
                 echo "If you need iMessage and or FaceTime downgrade to iOS 9.2 or iOS 9.2.1 instead."
             fi
             ;;
@@ -784,36 +651,6 @@ iphone_se_firmware_select() {
 
 # Begin actual execution. 
 
-if [ "$os" = "Linux" ]; then
-
-    # On Linux we need root.
-    if [ "$EUID" -ne 0 ]; then
-        echo "Error: a999 must be ran with root privileges on Linux. Please execute it with sudo or as the root user to continue."
-        exit 1
-    fi
-
-    # https://github.com/alex-free/a999activator/issues/8#issuecomment-3383734504
-    if command -v dnf >/dev/null; then
-        # Crypto libraries for lockdown.
-        update-crypto-policies --set LEGACY > /dev/null 2>&1
-        # Crypto policies usually require a reboot to take effect.
-        echo "Info: On the first run a999 activator can not connect to your iPhone, try rebooting your computer."
-        # Set SE linux to permissive (resets on Reboot)
-        setenforce 0
-        # Deps.
-        dnf install -y libimobiledevice libimobiledevice-utils expect idevicerestore irecovery
-    elif command -v apt >/dev/null; then
-        apt install --yes expect libimobiledevice libimobiledevice-utils expect idevicerestore irecovery
-    fi
-elif [ "$os" = "Darwin" ]; then
-    # All these executables are signed so that is the only think preventing gatekeeper from allowing the script to be automatic is the quarintine attributes.
-    # Remove any quarintine attributes in this folder.
-    xattr -rc .
-else
-    echo "Error: unsupported operating system!"
-    exit 1
-fi
-
 # When this script exits, automatically restart usbmuxd as normal. We are root at this point that this takes effect (on Linux).
 cleanup() 
 {
@@ -830,55 +667,22 @@ if [ ! -f "payload/com.alex.activate.plist" ]; then
 fi
 
 # Update functionallity. We need to get 2 things, the data folder and any boot* scripts.
-
 if [ "$1" == "-u" ]; then
-
     if [ "$#" -ne 2 ]; then
         echo "You gave the -u argument, which expect an existing a999activator release directory as the following argument."
         exit 1
     fi
 
-    if [ -d "$2"/data ]; then
-        echo "Found existing data folder!"
-        cp -rv "$2"/data .
-        echo "Copied existing data folder to a999activator!"
-    else
-        echo "Error: Could not find the data folder in $2!"
-        exit 1
-    fi
-
-    # Don't print error messages if no boot-* files exist.
-    cp -rv "$2"/boot-* . 2>/dev/null 
-    exit 0
+    update_existing_data "$2"
 fi
 
-if [ ! -d data ]; then
-    echo "Creating data folder..."
-    mkdir data
-else
-    echo "Loaded existing data folder!"
-fi
-
-# Create ipsw directory if it does not exist.
-mkdir -p data/ipsw
-
-if [ ! -f "bin/Legacy-iOS-Kit/resources/firstrun" ]; then
-    echo "Installing dependencies..."
-
-    (cd bin/Legacy-iOS-Kit && ./restore.sh --no-version-check --no-internet-check)
-    # This is to account for LibUSB being just installed.
-
-    echo -e "Please do the following to ensure A999 Activator can talk to your iPhone:\n\n* Disconnect your USB-A Lightning cable from your mac.\n* Connect the USB-A Lightning cable to the Mac wih your iPhone connected.\n"
-
-    read -p "After doing the above, press any key to continue..."
-fi
-
+startup
 detect_iphone
 
-if [ $device == "iphone-6s-plus" ]; then
+if [ $device == "iphone_6s_plus" ]; then
     iphone_6s_plus_firmware_select
-elif [ $device == "iphone-6s" ]; then
+elif [ $device == "iphone_6s" ]; then
     iphone_6s_firmware_select
-elif [ $device == "iphone-se" ]; then
+elif [ $device == "iphone_se" ]; then
     iphone_se_firmware_select
 fi

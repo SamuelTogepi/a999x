@@ -1,3 +1,6 @@
 [submodule "Legacy-iOS-Kit"]
 	path = bin/Legacy-iOS-Kit
 	url = https://github.com/alex-free/Legacy-iOS-Kit
+[submodule "bin/idevice-tool-kit"]
+	path = bin/idevice-tool-kit
+	url = https://github.com/alex-free/idevice-tool-kit
