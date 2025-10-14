@@ -1,6 +1,6 @@
 # A999 Activator: A9, iOS 9, 9 Years Later
 
-_By Alex Free_
+_By Samuel Bowers_
 
 A completely automatic solution that tether downgrades to iOS 9.2-9.3.3, jailbreaks, and activates any iPhone 6S, iPhone 6S Plus, or iPhone SE. Made possible by the work of many [others](#credits). iOS 9 WILL NEVER DIE. I had an iPhone 6S that I jailbroke with Pangu 9 on iOS 9.0.something back in the day, hence why I made this.
 
@@ -12,9 +12,6 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 
 * If your curious how this works, please check the [How This Works](#how-this-works) section.
 
-* Please check the [FAQ](#faq) section for more information and solutions. If you have an issue, please open a [Github issue](https://github.com/alex-free/a999activator/issues/new?template=issue.md) and fill out the information.
-
-| [Github](https://github.com/alex-free/a999activator) | [Homepage](https://github.com/alex-free/a999activator) | [Reddit Post](https://www.reddit.com/r/setupapp/comments/1kux73s/a999activator_automatic_downgrade_to_ios_9_with/) |
 
 # Table Of Contents
 
@@ -29,15 +26,9 @@ For those unfamilar, A9 iOS 9 activation doesn't work normally anymore for many 
 
 ## Downloads
 
-### Version 1.0.7 (10/12/2025)
+### Version 1.0 (10/14/2025)
 
-* [a999activator-v1.0.7.zip](https://github.com/alex-free/a999activator/releases/download/v1.0.7/a999-activator-v1.0.7.zip) _For Mac OS and for Linux_
-
-A999 Activator is designed to work on Debian, Fedora, and Mac OS 10.12 or newer. x86_64 and ARM64 arches are supported.
-
-Changes:
-
-* Now uses my own [idevice-tool-kit](https://github.com/alex-free/idevice-tool-kit) function library.
+A999X Activator is designed to work on Debian, Fedora, and Mac OS 10.12 or newer. x86_64 and ARM64 plus others are supported.
 
 [Previous versions](changelog.md).
 
@@ -108,7 +99,7 @@ This error occurs on Linux when booting iOS 9. Disconnect and reconnect the ligh
 
 ### Unable To Successfully Restore Device
 
-Wait until your prompted to enter DFU Mode again, and before you do disconnect and reconnect the lightning cable. The next restore should work.
+This can happen on Linux due to turdus merula. Wait until your prompted to enter DFU Mode again, and before you do disconnect and reconnect the lightning cable.
 
 ### My iPhone Is Stuck In The Ramdisk Ran Right After iOS 9 Is Restored.
 
@@ -194,4 +185,4 @@ A999activator itself is released under the 3-BSD license, see [license.md](licen
 
 * Turdus Merula (closed source, open source is planned).
 
-* Legacy-iOS-Kit (GNU GPL v3.0). This uses my [forked version](https://github.com/alex-free/Legacy-iOS-Kit) by the way.
+* Legacy-iOS-Kit (GNU GPL v3.0). This uses my [forked version]
