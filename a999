@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=1.0.7
+version=1.0
 real_portable_folder="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$real_portable_folder"
 # Log file.
@@ -8,7 +8,7 @@ exec > >(tee log.txt) 2>&1
 # Load common functions.
 source bin/idevice-tool-kit/idevice-tool-kit
 
-echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2025 Alex Free (3-BSD)\nhttps://github.com/alex-free/a999activator\n"
+echo -e "A999 Activator (A9, iOS 9, 9 years later) v$version\n(C) 2026 Samuel Bowers (3-BSD)\https://github.com/SamuelTogepi/a999x
 
 set_path
 
@@ -21,12 +21,12 @@ iproxy_kill() {
 }
 
 did_you_follow_instructions() {
-    pair_iphone
-    read -p "* Activate the iPhone. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should be in the iPhone with an active carrier. 
+    pair_iPad
+    read -p "* Activate the iPad. IMPORTANT: If you are going to use cellular features on iOS 9, your SIM card should be in the iPad with an active carrier. 
 
 * Sign in to iCloud and complete Setup.app. Get to the home screen. 
 
-* Make sure Find My iPhone has been turned off.
+* Make sure Find My iPad has been turned off.
 
 After all of the above is true press any key to continue..."
     wait_for_activation
@@ -76,9 +76,9 @@ start_rd() {
 
 wait_for_activation()
 {
-    # This confirms the iPhone is activated. It does not confirm if iCloud was signed in, if Find My iPhone was turned off, or if an active cell service SIM was used during activation.
+    # This confirms the iPad is activated. It does not confirm if iCloud was signed in, if Find My iPad was turned off, or if an active cell service SIM was used during activation.
     while ! is_activated; do
-        read -p "iPhone is not activated! Please make sure all of the above criteria are true as well and then press enter."
+        read -p "iPad is not activated! Please make sure all of the above criteria are true as well and then press enter."
         sleep 1
     done
 }
@@ -101,12 +101,12 @@ get_activation() {
     # Hail Mary if on latest iOS 15 already.
     ios_version=$(ideviceinfo 2>/dev/null | grep "ProductVersion" | awk '{print $2}')
 
-    # Set $not_normal when first connecting/detecting iPhone if it is in Recovery or DFU Mode.
+    # Set $not_normal when first connecting/detecting iPad if it is in Recovery or DFU Mode.
     if [ "$not_normal" == "true" ]; then
-        echo "Your iPhone is not in normal mode, so iOS version can not be determined. Restoring iPhone to iOS 15.8.5."
+        echo "Your iPad is not in normal mode, so iOS version can not be determined. Restoring iPad to iOS 15.8.5."
         restore_signed_ios=true
     elif [ "$ios_version" != "15.8.5" ]; then
-        echo "Latest iOS version is not installed. Restoring iPhone to iOS 15.8.5."
+        echo "Latest iOS version is not installed. Restoring iPad to iOS 15.8.5."
         restore_signed_ios=true
     elif [ "$ios_version" == "15.8.5" ]; then
         did_you_follow_instructions
@@ -354,7 +354,7 @@ downgrade() {
     }
     expect eof
 
-    # Transfer plutil (from com.bingner.plutil_0.2.1_iphoneos-arm.deb) to host.
+    # Transfer plutil (from com.bingner.plutil_0.2.1_iPados-arm.deb) to host.
     spawn scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 6414 payload/plutil root@127.0.0.1:/mnt1/usr/bin/plutil
     expect {
         "continue connecting" {
@@ -477,7 +477,7 @@ EOF
     iproxy_kill
     boot_turdusra1n
     
-    echo "Your iPhone is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPhone will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 45 seconds so that the LAST STEP can be completed!"
+    echo "Your iPad is now jailbroken! You need to enable it now by visiting http://jbme.ddw.nu/ in Safari after signing in to your WiFi. Once the jailbreak is enabled, your iPad will automatically reboot into Recovery Mode after restoring activation. Do not sign in to iCloud just yet! a999activator is going to start checking for Recovery Mode in 45 seconds so that the LAST STEP can be completed!"
     sleep 45
 
     boot_turdusra1n
@@ -490,7 +490,7 @@ EOF
             ;;
         9.3*)
             echo "IMPORTANT INFORMATION FOR iOS 9.3, iOS 9.3.1, iOS 9.3.2, AND iOS 9.3.3 USERS (WHICH YOU ARE): iMessage and FaceTime do not work yet!"
-            if [ $device != "iphone_se" ]; then
+            if [ $device != "ipad_pro_9.7" ]; then
                 echo "If you need iMessage and or FaceTime downgrade to iOS 9.2 or iOS 9.2.1 instead."
             fi
             ;;
@@ -499,7 +499,7 @@ EOF
     echo -e "\nDONE!\n"
 }
 
-iphone_6s_firmware_select() {
+ipad_pro_12.9_firmware_select() {
     PS3="Select iOS version to downgrade to: "
     options=(
         "9.2 (13C75) (12/8/2015)"
@@ -516,32 +516,45 @@ iphone_6s_firmware_select() {
     do
         case $opt in
             "9.2 (13C75) (12/8/2015)")
-                downgrade http://appldnld.apple.com/ios9.2/031-29220-20151203-557E81AA-8D8B-11E5-BEE6-AD638B8BECEB/iPhone8,1_9.2_13C75_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/ios9.2/031-29140-20151203-674A1328-8D8A-11E5-BD43-55618B8BECEB/iPad6,7_9.2_13C75_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/ios9.2/031-29216-20151203-674A518A-8D8A-11E5-97B3-57618B8BECEB/iPad6,8_9.2_13C75_Restore.ipsw
+                break
                 ;;
             "9.2.1 (13D15) (1/19/2016)")
-                downgrade http://appldnld.apple.com/ios9.2.1/031-47635-20160119-97350056-B969-11E5-A65F-634D8FD31F8F/iPhone8,1_9.2.1_13D15_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/ios9.2.1/031-47563-20160119-8C3DDEA8-B968-11E5-918A-CB4A8FD31F8F/iPad6,7_9.2.1_13D15_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/ios9.2.1/031-47548-20160119-8C3DB6D0-B968-11E5-AD30-CD4A8FD31F8F/iPad6,8_9.2.1_13D15_Restore.ipsw
+                break
                 ;;
             #"9.2.1 (13D20) (2/18/2016)") Can't use because jbme doesn't support it
-                #downgrade http://appldnld.apple.com/ios9.2.1/031-49377-20160217-4BB1908C-D44D-11E5-9900-0952919DCAD8/iPhone8,1_9.2.1_13D20_Restore.ipsw
+                #downgrade (WiFi) http://appldnld.apple.com/ios9.2.1/031-48671-20160217-4BB46F46-D44D-11E5-8BAB-0052919DCAD8/iPad6,7_9.2.1_13D20_Restore.ipsw
                 #break;
+                #downgrade (WiFi+LTE) http://appldnld.apple.com/ios9.2.1/031-47548-20160119-8C3DB6D0-B968-11E5-AD30-CD4A8FD31F8F/iPad6,8_9.2.1_13D15_Restore.ipsw
+                #break
                 #;;
             "9.3 (13E234) (3/21/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3/031-20814-20160321-50FF38D4-EAA8-11E5-AAA8-C479BD379832/iPhone8,1_9.3_13E234_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/iOS9.3/031-28362-20160321-5101CF90-EAA8-11E5-951B-CC79BD379832/iPad6,7_9.3_13E233_Restore.ipsw
+                break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/iOS9.3.1/031-55357-20160331-09B68CEA-F5E6-11E5-B924-2BCB2D794EB1/iPad6,8_9.3.1_13E238_Restore.ipsw
                 break;
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3.1/031-55114-20160331-09A05894-F5E6-11E5-861F-21CB2D794EB1/iPhone8,1_9.3.1_13E238_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/iOS9.3.1/031-54964-20160331-099887E0-F5E6-11E5-8F56-1FCB2D794EB1/iPad6,7_9.3.1_13E238_Restore.ipsw
+                break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/iOS9.3.1/031-55357-20160331-09B68CEA-F5E6-11E5-B924-2BCB2D794EB1/iPad6,8_9.3.1_13E238_Restore.ipsw
                 break;
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                downgrade http://appldnld.apple.com/ios9.3.2/031-62431-20160516-5E51F038-13A9-11E6-ACFA-61D9400DF7EB/iPhone8,1_9.3.2_13F69_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/ios9.3.2/031-62618-20160516-D6E79C64-13A9-11E6-9BD6-45DA400DF7EB/iPad6,7_9.3.2_13F69_Restore.ipsw
+                break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/ios9.3.2/031-62062-20160516-6A1A9458-13A7-11E6-8779-B8D6400DF7EB/iPad6,8_9.3.2_13F69_Restore.ipsw
                 break;
                 ;;
             "9.3.3 (13G34) (7/18/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3.3/031-60536-20160718-06EE469E-4378-11E6-8185-A7F759E0E9B6/iPhone8,1_9.3.3_13G34_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/iOS9.3.3/031-60723-20160718-55B463EE-4378-11E6-9EA0-C4FB59E0E9B6/iPad6,7_9.3.3_13G34_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/iOS9.3.3/031-60339-20160718-06EB8404-4378-11E6-A195-9DF759E0E9B6/iPad6,8_9.3.3_13G34_Restore.ipsw
                 ;;
             "Exit")
                 break
@@ -553,69 +566,14 @@ iphone_6s_firmware_select() {
     done
 }
 
-
-iphone_6s_plus_firmware_select() {
-
-    PS3="Select iOS version to downgrade to: "
-    options=(
-        "9.2 (13C75) (12/8/2015)"
-        "9.2.1 (13D15) (1/19/2016)"
-        #"9.2.1 (13D20) (2/18/2016)" can't use because jbme doesn't support it
-        "9.3 (13E234) (3/21/2016)"
-        "9.3.1 (13E238) (3/31/2016)"
-        "9.3.2 (13F69) (5/16/2016)"
-        "9.3.3 (13G34) (7/18/2016)"
-        "Exit"
-    )
-
-    select opt in "${options[@]}"
-    do
-        case $opt in
-            "9.2 (13C75) (12/8/2015)")
-                downgrade http://appldnld.apple.com/ios9.2/031-29142-20151203-53B314A8-8D8B-11E5-B7FA-9A638B8BECEB/iPhone8,2_9.2_13C75_Restore.ipsw
-                break;
-                ;;
-            "9.2.1 (13D15) (1/19/2016)")
-                downgrade http://appldnld.apple.com/ios9.2.1/031-47609-20160119-798F784C-B969-11E5-8729-F24C8FD31F8F/iPhone8,2_9.2.1_13D15_Restore.ipsw
-                break;
-                ;;
-            #"9.2.1 (13D20) (2/18/2016)") can't use because jbme doesn't support it
-                #downgrade http://appldnld.apple.com/ios9.2.1/031-49073-20160217-4BB05046-D44D-11E5-9D30-0852919DCAD8/iPhone8,2_9.2.1_13D20_Restore.ipsw
-                #break;
-                #;;
-            "9.3 (13E234) (3/21/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3/031-28376-20160321-51006FEC-EAA8-11E5-AEC6-D279BD379832/iPhone8,2_9.3_13E234_Restore.ipsw
-                break;
-                ;;
-            "9.3.1 (13E238) (3/31/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3.1/031-54811-20160331-099896CC-F5E6-11E5-88BA-1ACB2D794EB1/iPhone8,2_9.3.1_13E238_Restore.ipsw
-                break;
-                ;;
-            "9.3.2 (13F69) (5/16/2016)")
-                downgrade http://appldnld.apple.com/ios9.3.2/031-62657-20160516-02ECC2F8-13AA-11E6-AFB3-D9DA400DF7EB/iPhone8,2_9.3.2_13F69_Restore.ipsw
-                break;
-                ;;
-            "9.3.3 (13G34) (7/18/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3.3/031-60985-20160718-5C7A1B06-4378-11E6-8743-CEFC59E0E9B6/iPhone8,2_9.3.3_13G34_Restore.ipsw
-                break;
-                ;;
-            "Exit")
-                break
-                ;;
-            *)
-                echo "Invalid option"
-                ;;
-        esac
-    done
-}
-
-iphone_se_firmware_select() {
+ipad_pro_9.7_firmware_select() {
 
     PS3="Select iOS version to downgrade to: "
     options=(
         "9.3 (13E232) (3/21/2016)"
         "9.3.1 (13E238) (3/31/2016)"
         "9.3.2 (13F69) (5/16/2016)"
+        #"9.3.2 (13F72) (6/2/2016)" Can't use because jbme doesn't support it
         "9.3.3 (13G34) (7/18/2016)"
         "Exit"
     )
@@ -624,20 +582,30 @@ iphone_se_firmware_select() {
     do
         case $opt in
             "9.3 (13E233) (3/21/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3/031-20815-20160321-5102B932-EAA8-11E5-A488-C779BD379832/iPhone8,4_9.3_13E233_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/iOS9.3/031-20813-20160321-50FF2B1E-EAA8-11E5-A40C-C179BD379832/iPad6,3_9.3_13E234_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/iOS9.3/031-20816-20160321-50FFD67C-EAA8-11E5-AD85-C979BD379832/iPad6,4_9.3_13E234_Restore.ipsw
                 ;;
             "9.3.1 (13E238) (3/31/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3.1/031-55507-20160331-09A917D6-F5E6-11E5-BFDA-32CB2D794EB1/iPhone8,4_9.3.1_13E238_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/iOS9.3.1/031-54866-20160331-09994CCA-F5E6-11E5-8354-1DCB2D794EB1/iPad6,3_9.3.1_13E238_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/iOS9.3.1/031-55689-20160331-09B75440-F5E6-11E5-9FEA-37CB2D794EB1/iPad6,4_9.3.1_13E238_Restore.ipsw
                 ;;
             "9.3.2 (13F69) (5/16/2016)")
-                downgrade http://appldnld.apple.com/ios9.3.2/031-61688-20160516-6A0F5782-13A7-11E6-93C9-A4D6400DF7EB/iPhone8,4_9.3.2_13F69_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/ios9.3.2/031-62643-20160516-F67BDAE0-13A9-11E6-A5A3-AEDA400DF7EB/iPad6,3_9.3.2_13F69_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/ios9.3.2/031-62198-20160516-11E03836-13A9-11E6-832E-F4D8400DF7EB/iPad6,4_9.3.2_13F69_Restore.ipsw
                 ;;
+            #"9.3.2 (13F72) (6/2/2016)") Can't use because jbme doesn't support it
+                #downgrade (WiFi) http://appldnld.apple.com/ios9.3.2/031-63513-20160531-52E11156-2665-11E6-8860-F0F5662719FC/iPad6,3_9.3.2_13F72_Restore.ipsw
+                #break;
+                #downgrade (WiFi+LTE) http://appldnld.apple.com/ios9.3.2/031-63521-20160531-52E11160-2665-11E6-8860-F1F5662719FC/iPad6,4_9.3.2_13F72_Restore.ipsw
+                #break
+                #;;
             "9.3.3 (13G34) (7/18/2016)")
-                downgrade http://appldnld.apple.com/iOS9.3.3/031-60143-20160718-06E90A30-4378-11E6-81DC-8EF759E0E9B6/iPhone8,4_9.3.3_13G34_Restore.ipsw
+                downgrade (WiFi) http://appldnld.apple.com/iOS9.3.3/031-60435-20160718-06EB0394-4378-11E6-AB0E-9FF759E0E9B6/iPad6,3_9.3.3_13G34_Restore.ipsw
                 break;
+                downgrade (WiFi+LTE) http://appldnld.apple.com/iOS9.3.3/031-60169-20160718-06E9897E-4378-11E6-B6BC-93F759E0E9B6/iPad6,4_9.3.3_13G34_Restore.ipsw
                 ;;
             "Exit")
                 break
@@ -679,10 +647,8 @@ fi
 startup
 detect_iphone
 
-if [ $device == "iphone_6s_plus" ]; then
-    iphone_6s_plus_firmware_select
-elif [ $device == "iphone_6s" ]; then
-    iphone_6s_firmware_select
-elif [ $device == "iphone_se" ]; then
-    iphone_se_firmware_select
+if [ $device == "ipad_pro_12.9" ]; then
+    ipad_pro_12.9_firmware_select
+elif [ $device == "ipad_pro_9.7" ]; then
+    ipad_pro_9.7_firmware_select
 fi
