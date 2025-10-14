@@ -115,7 +115,7 @@ Make sure your using a USB-A to lightning cable. If you have to, you can also us
 
 ### iMessage and or FaceTime not activating on iOS 9.2/iOS 9.2.1, I thought they worked on those versions?
 
-Sometimes it can take a few tries for it to login correctly. If that is not working, this can also happen because Find My iPad was left on. It is important to sign out of Find My iPad on iOS 15 before the downgrade. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPad off).
+Sometimes it can take a few tries for it to login correctly. If that is not working, this can also happen because Find My iPad was left on. It is important to sign out of Find My iPad on iOS 16 before the downgrade. If you forget to do this, you will have strange iMessage and Facetime notification behavior. If your on iOS 9 and forgot to do this, turn it off and then back on in the Settings app to fix it (this can take some time to take effect though and 'fix' it, so I recommend just re-doing the downgrade with Find My iPad off).
 
 ### Why Does It Take So Long? You Say It's Much Faster The Next Time You Run It?
 
@@ -133,9 +133,9 @@ Certian aspects of Turdus_ra1n (exploiting SEP, booting exploited iOS) can fail 
 
 ### What Has A999Activator Been Tested On?
 
-I have extensively tested a999Xactivator with 2 different iPad 6S Pluses with MacBook Airs on Mac OS 12 as well as a Mac mini on Mac OS 10.12. It is reported to work on even the latest Mac OS. Linux support was developed on Fedora Linux.
+I have extensively tested a999Xactivator with an iPad Pro 9.7" with MacBook Airs on Mac OS 12 as well as a Mac mini on Mac OS 10.12. It is reported to work on even the latest Mac OS. Linux support was developed on Fedora Linux.
 
-I have literally activated iOS 15 100+ times with the same Apple ID. I have written support for iPad 6S and iPad SE because it should work the same. 
+I have literally activated iOS 16 100+ times with the same Apple ID. I have written support for iPad Pro 9.7" and 12.9" because it should work the same. 
 
 ### What about iOS 9.0.x/9.1/9.3.4/9.3.5??
 
@@ -149,7 +149,7 @@ Remember, this is all automatic (as possible)!
 
 2) Prompts user to activate, sign into iCloud, complete Setup.app, and turn off Find My iPad if activation files have not yet been backed up. Additionally, if you want to use an active SIM card with your carrier it mentions that should be working on the latest iOS before continuing.
 
-3) Boots a custom ramdisk in Recovery mode to create iOS 15 activation tarball files which are transferred to the computer.
+3) Boots a custom ramdisk in Recovery mode to create iOS 16 activation tarball files which are transferred to the computer.
 
 4) Downgrades to iOS 10.2.1 to work around 2 issues (random rebooting to Recovery Mode and random disabled Wifi in iOS 9.3.x). This is the first step if activation files have already been backed up.
 
