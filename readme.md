@@ -108,7 +108,7 @@ This error occurs on Linux when booting iOS 9. Disconnect and reconnect the ligh
 
 ### Unable To Successfully Restore Device
 
-This can happen on Linux due to turdus merula. Wait until your prompted to enter DFU Mode again, and before you do disconnect and reconnect the lightning cable.
+Wait until your prompted to enter DFU Mode again, and before you do disconnect and reconnect the lightning cable. The next restore should work.
 
 ### My iPhone Is Stuck In The Ramdisk Ran Right After iOS 9 Is Restored.
 
